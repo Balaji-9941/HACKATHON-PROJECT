@@ -1,0 +1,26 @@
+{
+  "modelVersion": "xgboost-v1",
+  "algorithm": "XGBoost (XGBClassifier)",
+  "trainedOn": "PaySim & ULB Verified Multi-Feature Distribution",
+  "trainSamples": 180,
+  "testSamples": 60,
+  "precision": 1.0,
+  "recall": 1.0,
+  "f1Score": 1.0,
+  "rocAuc": 1.0,
+  "confusionMatrix": {
+    "tn": 47,
+    "fp": 0,
+    "fn": 0,
+    "tp": 13
+  },
+  "featureImportances": {
+    "amount_ratio": 1.0,
+    "velocity_burst": 0.0,
+    "device_novelty": 0.0,
+    "location_variance": 0.0,
+    "temporal_deviation": 0.0,
+    "merchant_risk": 0.0,
+    "network_risk": 0.0
+  }
+}
