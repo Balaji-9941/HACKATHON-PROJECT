@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Shield, HelpCircle, Check } from 'lucide-react';
+import { ArrowLeft, Shield, HelpCircle, Check, Cpu } from 'lucide-react';
 import { formatCurrency, getRiskColor } from '../../utils/api';
 
 export default function TransactionDetail({ transaction, onBack, onAcknowledge }) {
@@ -42,15 +42,15 @@ export default function TransactionDetail({ transaction, onBack, onAcknowledge }
         <h2 className="text-base font-bold text-slate-900 truncate">{transaction.recipientName || transaction.recipientUpiId}</h2>
         <p className="text-3xl font-black text-slate-900 font-mono tracking-tight">{formatCurrency(transaction.amount)}</p>
         <span className={`inline-block px-2.5 py-0.5 text-xs font-mono rounded-md ${riskStyle.badge} mt-2`}>
-          {transaction.alertSeverity.toUpperCase()} • SCORE {transaction.totalRiskScore}/100
+          {transaction.alertSeverity.toUpperCase()} • ML SCORE {transaction.totalRiskScore}/100
         </span>
       </div>
 
-      {/* Why this was flagged */}
+      {/* ML Telemetry Analysis */}
       <div className={`p-4 rounded-xl border ${riskStyle.bg} ${riskStyle.border} space-y-1.5`}>
         <div className="flex items-center space-x-2">
-          <Shield className="w-4 h-4 text-slate-800" />
-          <h4 className="text-xs font-bold text-slate-900">Telemetry Analysis</h4>
+          <Cpu className="w-4 h-4 text-blue-700" />
+          <h4 className="text-xs font-bold text-slate-900">XGBoost ML Classification Analysis</h4>
         </div>
         <p className="text-xs text-slate-800 leading-relaxed font-medium">
           {transaction.fraudExplanation}
@@ -67,7 +67,7 @@ export default function TransactionDetail({ transaction, onBack, onAcknowledge }
 
       {/* 7-Factor Risk Telemetry Meter */}
       <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-card space-y-3">
-        <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">7-Factor Telemetry Attribution</h4>
+        <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">XGBoost Input Feature Weights</h4>
         <div className="space-y-2">
           {signals.map((sig, idx) => {
             const ratio = sig.score / sig.max;
@@ -112,7 +112,7 @@ export default function TransactionDetail({ transaction, onBack, onAcknowledge }
           )}
         </div>
         <p className="text-[11px] text-slate-500 leading-relaxed font-medium">
-          Confirming recognized transactions refines your account baseline and reduces unnecessary verification prompts.
+          Confirming recognized transactions trains the model on your hardware keys and reduces verification friction.
         </p>
       </div>
 
@@ -135,8 +135,8 @@ export default function TransactionDetail({ transaction, onBack, onAcknowledge }
           <span className="text-slate-800">{new Date(transaction.timestamp).toLocaleString()}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-slate-500">Scoring Engine:</span>
-          <span className="font-mono text-blue-700 font-bold">Tier {transaction.modelTier} ({transaction.modelVersion})</span>
+          <span className="text-slate-500">ML Engine:</span>
+          <span className="font-mono text-blue-700 font-bold">XGBoost Classifier ({transaction.modelVersion || 'xgboost-ml-v3'})</span>
         </div>
       </div>
     </div>

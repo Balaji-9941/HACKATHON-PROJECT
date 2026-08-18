@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, ShieldAlert, ArrowUpRight, CheckCircle2, ChevronRight, Pause, Play } from 'lucide-react';
+import { Search, Filter, ShieldAlert, ArrowUpRight, CheckCircle2, ChevronRight, Pause, Play, Cpu } from 'lucide-react';
 import { fetchAPI, formatCurrency, getRiskColor } from '../../utils/api';
 import { useSocket } from '../../context/SocketContext';
 
@@ -56,7 +56,7 @@ export default function LiveStreamTable({ onSelectTransaction }) {
               {filtered.length} Events
             </span>
           </h3>
-          <p className="text-xs text-slate-500 font-medium">Real-time evaluated transactions scored across Tier 1 rules and Tier 2 ML</p>
+          <p className="text-xs text-slate-500 font-medium">Real-time transactions evaluated directly by the Pure XGBoost ML Classifier</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -107,10 +107,10 @@ export default function LiveStreamTable({ onSelectTransaction }) {
               <th className="py-2.5">Payer Account</th>
               <th className="py-2.5">Recipient / Merchant</th>
               <th className="py-2.5 text-right">Amount (INR)</th>
-              <th className="py-2.5 text-center">Score</th>
+              <th className="py-2.5 text-center">Risk Score</th>
               <th className="py-2.5">Severity</th>
               <th className="py-2.5">Friction Policy</th>
-              <th className="py-2.5">Engine Tier</th>
+              <th className="py-2.5">ML Engine</th>
               <th className="py-2.5 text-right pr-3">Latency</th>
             </tr>
           </thead>
@@ -162,8 +162,8 @@ export default function LiveStreamTable({ onSelectTransaction }) {
                     <td className="py-2.5 font-mono text-[11px] text-slate-700 capitalize">
                       {t.userFrictionLevel || 'none'}
                     </td>
-                    <td className="py-2.5 text-[11px] text-slate-600 font-mono">
-                      Tier {t.modelTier || 1}
+                    <td className="py-2.5 text-[11px] text-blue-700 font-mono font-semibold">
+                      XGBoost ML
                     </td>
                     <td className="py-2.5 text-right pr-3 font-mono text-emerald-700 font-semibold">
                       {t.latencyMs || 12}ms

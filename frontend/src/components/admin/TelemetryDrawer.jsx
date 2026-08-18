@@ -31,7 +31,7 @@ export default function TelemetryDrawer({ transaction, onClose, onInspectNetwork
             </span>
           </div>
           <h3 className="text-base font-bold text-slate-900 mt-1">
-            Telemetry Inspector & SHAP Explainability
+            XGBoost ML Inspector & TreeSHAP Explainability
           </h3>
         </div>
         <button
@@ -52,7 +52,7 @@ export default function TelemetryDrawer({ transaction, onClose, onInspectNetwork
           </div>
 
           <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-            <span className="text-[10px] text-slate-500 font-semibold uppercase">Risk Score</span>
+            <span className="text-[10px] text-slate-500 font-semibold uppercase">ML Model Risk Score</span>
             <p className="text-xl font-bold font-mono text-rose-700">{transaction.totalRiskScore}/100</p>
           </div>
         </div>
@@ -61,7 +61,7 @@ export default function TelemetryDrawer({ transaction, onClose, onInspectNetwork
         <div className={`p-4 rounded-xl border space-y-1.5 ${risk.bg} ${risk.border}`}>
           <span className="text-xs font-bold text-slate-900 flex items-center space-x-1.5">
             <ShieldAlert className="w-4 h-4 text-rose-600" />
-            <span>Deterministic Rule Hypothesis:</span>
+            <span>XGBoost Fraud Classification Inference:</span>
           </span>
           <p className="text-xs text-slate-800 leading-relaxed font-medium">
             {transaction.fraudExplanation || 'Standard telemetry profile within baseline boundaries.'}
@@ -79,7 +79,7 @@ export default function TelemetryDrawer({ transaction, onClose, onInspectNetwork
         {/* 7 Telemetry Factors Meter */}
         <div className="space-y-3">
           <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-            Multivariate Signal Telemetry (Tier 1 Engine)
+            Multivariate Signal Telemetry (XGBoost Input Space)
           </h4>
           <div className="space-y-2">
             {signals.map((sig, idx) => {
@@ -106,7 +106,7 @@ export default function TelemetryDrawer({ transaction, onClose, onInspectNetwork
         {/* SHAP Waterfall / Feature Breakdown */}
         <div className="space-y-3">
           <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-            Feature Attribution Waterfall (SHAP)
+            TreeSHAP Feature Attribution Waterfall
           </h4>
           <ScoreBreakdownChart transaction={transaction} />
         </div>
@@ -131,8 +131,8 @@ export default function TelemetryDrawer({ transaction, onClose, onInspectNetwork
             <span className="text-slate-700">{transaction.location}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-slate-500">Execution Tier:</span>
-            <span className="font-mono text-blue-700 font-bold">Tier {transaction.modelTier} ({transaction.modelVersion})</span>
+            <span className="text-slate-500">Model Engine:</span>
+            <span className="font-mono text-blue-700 font-bold">XGBoost ML ({transaction.modelVersion || 'xgboost-ml-v3'})</span>
           </div>
         </div>
       </div>

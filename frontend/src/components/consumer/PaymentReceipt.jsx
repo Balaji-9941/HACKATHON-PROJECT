@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2, ShieldCheck, ArrowRight } from 'lucide-react';
+import { CheckCircle2, ShieldCheck, ArrowRight, Cpu } from 'lucide-react';
 import { formatCurrency, getRiskColor } from '../../utils/api';
 
 export default function PaymentReceipt({ transaction, onDone }) {
@@ -25,7 +25,7 @@ export default function PaymentReceipt({ transaction, onDone }) {
         </p>
       </div>
 
-      {/* Real-time Risk Intelligence Badge */}
+      {/* Real-time ML Risk Intelligence Badge */}
       <div className={`p-4 rounded-xl border ${riskStyle.bg} ${riskStyle.border} space-y-2`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -41,7 +41,7 @@ export default function PaymentReceipt({ transaction, onDone }) {
               }`}
             />
             <span className="text-xs font-bold text-slate-900">
-              PayTelemetry Risk Score: {transaction.totalRiskScore}/100
+              XGBoost ML Risk Score: {transaction.totalRiskScore}/100
             </span>
           </div>
           <span className={`text-[11px] font-mono px-2 py-0.5 rounded-md ${riskStyle.badge}`}>
@@ -54,7 +54,7 @@ export default function PaymentReceipt({ transaction, onDone }) {
         </p>
 
         <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between text-[11px] text-slate-600 font-mono">
-          <span>Engine: <strong className="text-slate-800">Tier {transaction.modelTier}</strong></span>
+          <span>Engine: <strong className="text-blue-700">XGBoost Classifier</strong></span>
           <span>Latency: <strong className="text-emerald-700 font-bold">{transaction.latencyMs || 12}ms</strong></span>
         </div>
       </div>

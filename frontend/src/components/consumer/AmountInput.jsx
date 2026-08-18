@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Shield } from 'lucide-react';
+import { ArrowLeft, Shield, Cpu } from 'lucide-react';
 import { formatCurrency } from '../../utils/api';
 
 export default function AmountInput({ recipient, amount, setAmount, onProceed, onBack, preCheckAssessment, isEvaluating }) {
@@ -42,7 +42,7 @@ export default function AmountInput({ recipient, amount, setAmount, onProceed, o
         </p>
       </div>
 
-      {/* Real-time Pre-Check Gauge */}
+      {/* Real-time ML Pre-Check Gauge */}
       {preCheckAssessment && numAmount > 0 && (
         <div className="p-3 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-between text-xs transition">
           <div className="flex items-center space-x-2">
@@ -62,8 +62,8 @@ export default function AmountInput({ recipient, amount, setAmount, onProceed, o
             </span>
           </div>
           <span className="text-[11px] font-mono text-blue-700 font-semibold flex items-center space-x-1">
-            <Shield className="w-3.5 h-3.5 text-blue-600" />
-            <span>Tier 1 Pre-Check ({preCheckAssessment.latencyMs || 2}ms)</span>
+            <Cpu className="w-3.5 h-3.5 text-blue-600" />
+            <span>XGBoost ML Pre-Check ({preCheckAssessment.latencyMs || 2}ms)</span>
           </span>
         </div>
       )}
@@ -119,7 +119,7 @@ export default function AmountInput({ recipient, amount, setAmount, onProceed, o
           className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-sm shadow-md transition active:scale-[0.98] flex items-center justify-center space-x-2"
         >
           {isEvaluating ? (
-            <span>Evaluating telemetry...</span>
+            <span>Evaluating ML model...</span>
           ) : (
             <span>Proceed to Review</span>
           )}

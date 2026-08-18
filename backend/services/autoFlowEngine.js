@@ -1,10 +1,9 @@
 const Customer = require('../models/Customer');
 const Merchant = require('../models/Merchant');
 const Transaction = require('../models/Transaction');
-const { evaluateTier1 } = require('../engine/telemetryEngine');
+const { evaluateMLTransaction } = require('../engine/telemetryEngine');
 const { triggerScenario, SCENARIO_TYPES } = require('./scenarioInjector');
 const { handleTransactionAlert } = require('./alertManager');
-const mlClient = require('../engine/mlClient');
 
 class AutoFlowEngine {
   constructor() {
@@ -43,7 +42,7 @@ class AutoFlowEngine {
 
     this.isRunning = true;
     this.isPaused = false;
-    console.log(`[AutoFlowEngine] Started background stream @ ${this.ratePerSecond} txns/sec.`);
+    console.log(`[AutoFlowEngine] Started pure ML background stream @ ${this.ratePerSecond} txns/sec.`);
 
     if (this.timer) clearInterval(this.timer);
     const intervalMs = Math.max(50, Math.round(1000 / this.ratePerSecond));
@@ -87,7 +86,7 @@ class AutoFlowEngine {
 
     console.log(`[AutoFlowEngine] Configuration updated: rate=${this.ratePerSecond}/s`);
     if (this.isRunning && !this.isPaused) {
-      this.start(); // Reschedule with new interval
+      this.start();
     }
     this.broadcastStatus();
   }
@@ -160,12 +159,12 @@ class AutoFlowEngine {
         timestamp: new Date()
       };
 
-      // Full Tier 1 Evaluation
-      const assessment = evaluateTier1(txnInput, customer, merchant, []);
+      // 100% Pure ML Evaluation
+      const assessment = await evaluateMLTransaction(txnInput, customer, merchant, []);
       this.latencies.push(assessment.latencyMs || 12);
       if (this.latencies.length > 200) this.latencies.shift();
 
-      const transactionId = `TXN-AUTO-${Date.now()}-${Math.floor(1000 + (assessment.totalRiskScore * 3))}`;
+      const transactionId = `TXN-ML-${Date.now()}-${Math.floor(1000 + (assessment.totalRiskScore * 3))}`;
 
       const txnDoc = new Transaction({
         transactionId,
@@ -179,7 +178,7 @@ class AutoFlowEngine {
         deviceName: 'Pixel-8-Pro',
         timestamp: new Date(),
         status: 'SETTLED',
-        dataSource: customer.dataSource || 'offline-sample',
+        dataSource: customer.dataSource || 'fraudshield_v2',
         flowSource: 'autoflow_replay',
 
         totalRiskScore: assessment.totalRiskScore,
@@ -188,8 +187,10 @@ class AutoFlowEngine {
         fraudExplanation: assessment.fraudExplanation,
         explanationFactors: assessment.explanationFactors,
 
-        modelTier: 1,
-        modelVersion: 'tier1-deterministic-v1',
+        modelTier: 2,
+        mlProbability: assessment.mlProbability,
+        shapValues: assessment.shapValues,
+        modelVersion: assessment.modelVersion || 'xgboost-ml-v3',
         alertSeverity: assessment.alertSeverity,
         userFrictionLevel: assessment.userFrictionLevel,
         latencyMs: assessment.latencyMs,
@@ -206,34 +207,7 @@ class AutoFlowEngine {
       // Check alert
       await handleTransactionAlert(txnDoc, customer, this.io);
 
-      // Async Tier 2 call (non-blocking)
-      setImmediate(async () => {
-        try {
-          if (!mlClient.isCircuitOpen()) {
-            const mlRes = await mlClient.predict(assessment.anomalyFeatures);
-            if (mlRes && typeof mlRes.probability === 'number') {
-              const blended = Math.round(0.5 * assessment.totalRiskScore + 0.5 * (mlRes.probability * 100));
-              txnDoc.modelTier = 2;
-              txnDoc.totalRiskScore = blended;
-              txnDoc.mlProbability = mlRes.probability;
-              txnDoc.modelVersion = mlRes.modelVersion;
-              await txnDoc.save();
-
-              if (this.io) {
-                this.io.emit('admin:tier2_update', {
-                  transactionId: txnDoc.transactionId,
-                  modelTier: 2,
-                  totalRiskScore: blended,
-                  mlProbability: mlRes.probability
-                });
-              }
-            }
-          }
-        } catch (e) {}
-      });
-
     } catch (tickErr) {
-      // Never stall the loop on a single failure
       console.error('[AutoFlowEngine Tick Error]:', tickErr.message);
     }
   }

@@ -1,7 +1,7 @@
 const Customer = require('../models/Customer');
 const Merchant = require('../models/Merchant');
 const Transaction = require('../models/Transaction');
-const { evaluateTier1 } = require('../engine/telemetryEngine');
+const { evaluateMLTransaction } = require('../engine/telemetryEngine');
 const { handleTransactionAlert } = require('./alertManager');
 const { logAuditEvent } = require('./auditLogger');
 const mlClient = require('../engine/mlClient');
@@ -15,14 +15,9 @@ const SCENARIO_TYPES = {
 };
 
 /**
- * Triggers a real scenario against a genuine customer baseline
- * @param {string} scenarioType
- * @param {string} flowSource 'manual_injection' or 'autoflow_scenario'
- * @param {Object} io Socket.io instance
- * @returns {Promise<Object>} Created transaction
+ * Triggers a real scenario against a genuine customer baseline using Pure ML scoring
  */
 const triggerScenario = async (scenarioType, flowSource = 'manual_injection', io = null) => {
-  // Select customer Aarav Patel or default demo customer
   let customer = await Customer.findOne({ customerId: 'CUST-1001' });
   if (!customer) {
     customer = await Customer.findOne();
@@ -41,13 +36,11 @@ const triggerScenario = async (scenarioType, flowSource = 'manual_injection', io
 
   switch (scenarioType) {
     case SCENARIO_TYPES.VELOCITY_BURST: {
-      // 4 rapid transactions
       const amount = Math.round(customer.avgTransaction * 1.5);
       recipientUpiId = 'amazonpay@apl';
       recipientName = 'Amazon India Retail';
       merchantCategory = 'ecommerce';
 
-      // Insert 3 prior rapid transactions in past 30 seconds
       for (let i = 1; i <= 3; i++) {
         const priorTime = new Date(now.getTime() - (i * 8000));
         await Transaction.create({
@@ -62,12 +55,13 @@ const triggerScenario = async (scenarioType, flowSource = 'manual_injection', io
           deviceName: 'Pixel-8-Pro',
           timestamp: priorTime,
           status: 'SETTLED',
-          dataSource: customer.dataSource || 'live',
+          dataSource: customer.dataSource || 'fraudshield_v2',
           flowSource,
-          totalRiskScore: 25,
+          totalRiskScore: 35,
           riskBreakdown: { velocityBurst: i * 4 },
           fraudExplanation: 'Velocity burst test vector.',
-          modelTier: 1,
+          modelTier: 2,
+          modelVersion: 'xgboost-ml-v3',
           alertSeverity: 'low',
           userFrictionLevel: 'banner'
         });
@@ -85,7 +79,6 @@ const triggerScenario = async (scenarioType, flowSource = 'manual_injection', io
     }
 
     case SCENARIO_TYPES.DEVICE_TAKEOVER: {
-      // High amount from unrecognized device
       const amount = Math.round(customer.avgTransaction * 9.5);
       recipientUpiId = 'quickdisbursal@fintech';
       recipientName = 'FastCash Quick Loan Servicing';
@@ -104,54 +97,46 @@ const triggerScenario = async (scenarioType, flowSource = 'manual_injection', io
     }
 
     case SCENARIO_TYPES.IMPOSSIBLE_TRAVEL: {
-      // Foreign location + off-hours
       const amount = Math.round(customer.avgTransaction * 4.2);
-      recipientUpiId = 'hotelres@travelpay';
-      recipientName = 'Grand Resort Moscow',
-      merchantCategory = 'travel';
-      merchantRiskTier = 3;
+      recipientUpiId = 'royalwin@offshorepay';
+      recipientName = 'Offshore Gaming & Casino';
+      merchantCategory = 'gambling';
+      merchantRiskTier = 5;
+
+      const offsetDate = new Date(now);
+      offsetDate.setHours(3, 15, 0, 0);
 
       txnInput = {
         amount,
         location: 'Moscow, RU',
-        deviceId: customer.knownDevices[0] || 'dev-pixel-8',
-        deviceName: 'Pixel-8-Pro',
+        deviceId: 'dev-foreign-proxy-88',
+        deviceName: 'Foreign Node',
         merchantCategory,
-        timestamp: new Date(now.setHours(3, 15, 0, 0))
+        timestamp: offsetDate
       };
       break;
     }
 
     case SCENARIO_TYPES.MULE_RING: {
-      // Mule cluster connection to Crypto P2P Desk
-      const amount = Math.round(customer.avgTransaction * 18);
+      const amount = Math.min(customer.balance || 45000, 38000);
       recipientUpiId = 'p2pdesk@cryptopay';
       recipientName = 'CryptoExchange P2P Desk';
       merchantCategory = 'crypto_virtual';
       merchantRiskTier = 5;
 
-      const muleCustomer = {
-        ...customer.toObject(),
-        networkRiskTier: 5
-      };
-
       txnInput = {
         amount,
         location: 'Kolkata, IN',
-        deviceId: 'dev-burner-mule-node',
-        deviceName: 'Mule Terminal Alpha',
+        deviceId: 'dev-mule-aggregator-01',
+        deviceName: 'Mule Terminal Cluster',
         merchantCategory,
         timestamp: now
       };
-
-      customer = muleCustomer;
       break;
     }
 
-    case SCENARIO_TYPES.CARD_TESTING:
-    default: {
-      // Card testing small probing amount
-      const amount = 15;
+    case SCENARIO_TYPES.CARD_TESTING: {
+      const amount = 25;
       recipientUpiId = 'tataneu@hdfcbank';
       recipientName = 'Tata Neu SuperApp';
       merchantCategory = 'retail';
@@ -160,24 +145,26 @@ const triggerScenario = async (scenarioType, flowSource = 'manual_injection', io
       txnInput = {
         amount,
         location: customer.usualLocation,
-        deviceId: 'dev-probing-bot-01',
-        deviceName: 'Automated Scripting Bot',
+        deviceId: customer.knownDevices[0] || 'dev-pixel-8',
+        deviceName: 'Pixel-8-Pro',
         merchantCategory,
         timestamp: now
       };
       break;
     }
+
+    default:
+      throw new Error(`Unknown scenario type: ${scenarioType}`);
   }
 
-  // Fetch recent transactions for velocity calculation
   const cutoff = new Date(Date.now() - 120000);
   const recentTxns = await Transaction.find({
     customerId: customer.customerId,
     timestamp: { $gte: cutoff }
   }).select('timestamp');
 
-  // Evaluate through Tier 1 Engine
-  const assessment = evaluateTier1(
+  // Direct 100% Pure ML Evaluation
+  const assessment = await evaluateMLTransaction(
     txnInput,
     customer,
     { riskTier: merchantRiskTier },
@@ -198,7 +185,7 @@ const triggerScenario = async (scenarioType, flowSource = 'manual_injection', io
     deviceName: txnInput.deviceName,
     timestamp: txnInput.timestamp || new Date(),
     status: 'SETTLED',
-    dataSource: customer.dataSource || 'live',
+    dataSource: customer.dataSource || 'fraudshield_v2',
     flowSource,
     isSimulatedScenario: true,
     scenarioType,
@@ -209,8 +196,10 @@ const triggerScenario = async (scenarioType, flowSource = 'manual_injection', io
     fraudExplanation: assessment.fraudExplanation,
     explanationFactors: assessment.explanationFactors,
 
-    modelTier: 1,
-    modelVersion: 'tier1-deterministic-v1',
+    modelTier: 2,
+    mlProbability: assessment.mlProbability,
+    shapValues: assessment.shapValues,
+    modelVersion: assessment.modelVersion || 'xgboost-ml-v3',
     alertSeverity: assessment.alertSeverity,
     userFrictionLevel: assessment.userFrictionLevel,
     latencyMs: assessment.latencyMs,
@@ -239,39 +228,10 @@ const triggerScenario = async (scenarioType, flowSource = 'manual_injection', io
     }
   });
 
-  // Async ML enrichment if circuit closed
-  setImmediate(async () => {
-    try {
-      if (!mlClient.isCircuitOpen()) {
-        const mlRes = await mlClient.predict(assessment.anomalyFeatures);
-        if (mlRes && typeof mlRes.probability === 'number') {
-          const blended = Math.round(0.5 * assessment.totalRiskScore + 0.5 * (mlRes.probability * 100));
-          const shap = await mlClient.explain(assessment.anomalyFeatures);
-          txnDoc.modelTier = 2;
-          txnDoc.totalRiskScore = blended;
-          txnDoc.mlProbability = mlRes.probability;
-          txnDoc.modelVersion = mlRes.modelVersion;
-          if (shap) txnDoc.shapValues = shap;
-          await txnDoc.save();
-
-          if (io) {
-            io.emit('admin:tier2_update', {
-              transactionId: txnDoc.transactionId,
-              modelTier: 2,
-              totalRiskScore: blended,
-              mlProbability: mlRes.probability,
-              shapValues: shap
-            });
-          }
-        }
-      }
-    } catch (e) {}
-  });
-
   return txnDoc;
 };
 
 module.exports = {
-  SCENARIO_TYPES,
-  triggerScenario
+  triggerScenario,
+  SCENARIO_TYPES
 };

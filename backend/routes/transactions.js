@@ -3,13 +3,13 @@ const router = express.Router();
 const Customer = require('../models/Customer');
 const Transaction = require('../models/Transaction');
 const Merchant = require('../models/Merchant');
-const { evaluateTier1 } = require('../engine/telemetryEngine');
+const { evaluateMLTransaction } = require('../engine/telemetryEngine');
 const mlClient = require('../engine/mlClient');
 const narrativeEngine = require('../engine/narrativeEngine');
 const { handleTransactionAlert } = require('../services/alertManager');
 const { logAuditEvent } = require('../services/auditLogger');
 
-// POST /api/transactions/pre-check (<20ms synchronous Tier 1 evaluation)
+// POST /api/transactions/pre-check (Pure ML Evaluation in <25ms)
 router.post('/pre-check', async (req, res) => {
   const reqStart = process.hrtime();
   try {
@@ -34,7 +34,7 @@ router.post('/pre-check', async (req, res) => {
       timestamp: { $gte: cutoff }
     }).select('timestamp');
 
-    const assessment = evaluateTier1(
+    const assessment = await evaluateMLTransaction(
       { amount, location, deviceId, deviceName, merchantCategory, timestamp: new Date() },
       customer,
       merchant,
@@ -57,7 +57,7 @@ router.post('/pre-check', async (req, res) => {
   }
 });
 
-// POST /api/transactions/confirm (<200ms settlement and async ML enhancement)
+// POST /api/transactions/confirm (Pure ML Settlement & Real-time TreeSHAP Recording)
 router.post('/confirm', async (req, res) => {
   const reqStart = process.hrtime();
   try {
@@ -94,15 +94,15 @@ router.post('/confirm', async (req, res) => {
       timestamp: { $gte: cutoff }
     }).select('timestamp');
 
-    // 1. Synchronous Tier 1 Evaluation
-    const assessment = evaluateTier1(
+    // 1. Direct Pure ML Evaluation
+    const assessment = await evaluateMLTransaction(
       { amount, location, deviceId, deviceName, merchantCategory, timestamp: new Date() },
       customer,
       merchant,
       recentTxns
     );
 
-    // 2. Settle transaction immediately (Financial settlement is non-blocking)
+    // 2. Settle transaction immediately (Financial balance deduction)
     const transactionId = `TXN-${Date.now()}-${Math.floor(1000 + (assessment.totalRiskScore * 9))}`;
     
     // Debit customer balance
@@ -134,8 +134,10 @@ router.post('/confirm', async (req, res) => {
       fraudExplanation: assessment.fraudExplanation,
       explanationFactors: assessment.explanationFactors,
 
-      modelTier: 1,
-      modelVersion: 'tier1-deterministic-v1',
+      modelTier: 2,
+      mlProbability: assessment.mlProbability,
+      shapValues: assessment.shapValues,
+      modelVersion: assessment.modelVersion || 'xgboost-ml-v3',
       alertSeverity: assessment.alertSeverity,
       userFrictionLevel: assessment.userFrictionLevel,
       latencyMs: assessment.latencyMs,
@@ -145,7 +147,7 @@ router.post('/confirm', async (req, res) => {
 
     await transactionDoc.save();
 
-    // 3. Auto Alert Creation if high/critical
+    // 3. Auto Alert Creation if high/critical ML risk
     const io = req.app.get('io');
     await handleTransactionAlert(transactionDoc, customer, io);
 
@@ -161,6 +163,7 @@ router.post('/confirm', async (req, res) => {
       entityId: transactionId,
       newState: {
         amount,
+        mlProbability: assessment.mlProbability,
         riskScore: assessment.totalRiskScore,
         severity: assessment.alertSeverity,
         friction: assessment.userFrictionLevel
@@ -171,92 +174,50 @@ router.post('/confirm', async (req, res) => {
     const endToEndLatencyMs = Number((diff[0] * 1000 + diff[1] / 1e6).toFixed(2));
 
     // Respond immediately to consumer / caller
-    res.json({
+    return res.json({
       success: true,
       transaction: transactionDoc,
       endToEndLatencyMs
     });
-
-    // 5. Asynchronous Non-Blocking Tier 2 ML Scoring & Narrative Enrichment
-    setImmediate(async () => {
-      try {
-        if (!mlClient.isCircuitOpen()) {
-          const mlResult = await mlClient.predict(assessment.anomalyFeatures);
-          if (mlResult && typeof mlResult.probability === 'number') {
-            const blendedScore = Math.round(0.5 * assessment.totalRiskScore + 0.5 * (mlResult.probability * 100));
-            const shapValues = await mlClient.explain(assessment.anomalyFeatures);
-
-            transactionDoc.modelTier = 2;
-            transactionDoc.mlProbability = mlResult.probability;
-            transactionDoc.modelVersion = mlResult.modelVersion;
-            transactionDoc.totalRiskScore = blendedScore;
-            if (shapValues) {
-              transactionDoc.shapValues = shapValues;
-            }
-
-            // Optional LLM Narrative
-            const narrative = await narrativeEngine.generateNarrative({
-              factors: assessment.explanationFactors,
-              customer,
-              amount,
-              location,
-              deviceName,
-              riskScore: blendedScore
-            });
-            if (narrative) {
-              transactionDoc.aiNarrative = narrative;
-            }
-
-            await transactionDoc.save();
-
-            if (io) {
-              io.emit('admin:tier2_update', {
-                transactionId: transactionDoc.transactionId,
-                modelTier: 2,
-                totalRiskScore: blendedScore,
-                mlProbability: mlResult.probability,
-                shapValues: transactionDoc.shapValues,
-                modelVersion: mlResult.modelVersion,
-                aiNarrative: transactionDoc.aiNarrative
-              });
-            }
-          }
-        }
-      } catch (asyncErr) {
-        // Non-blocking catch
-        console.error('[Async ML Background Error]:', asyncErr.message);
-      }
-    });
-
   } catch (error) {
     console.error('[Confirm Error]:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-// GET /api/transactions
+// GET /api/transactions (Query with filtering & pagination)
 router.get('/', async (req, res) => {
   try {
-    const { customerId, flowSource, severity, limit = 50, skip = 0 } = req.query;
-    let query = {};
-    if (customerId) query.customerId = customerId;
-    if (flowSource) query.flowSource = flowSource;
-    if (severity) query.alertSeverity = severity;
+    const { customerId, severity, status, limit = 50, page = 1 } = req.query;
+    const filter = {};
 
-    const transactions = await Transaction.find(query)
+    if (customerId) filter.customerId = customerId;
+    if (severity && severity !== 'ALL') filter.alertSeverity = severity.toLowerCase();
+    if (status) filter.status = status;
+
+    const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+    const transactions = await Transaction.find(filter)
       .sort({ timestamp: -1 })
-      .limit(Number(limit))
-      .skip(Number(skip));
+      .skip(skip)
+      .limit(parseInt(limit, 10));
 
-    const total = await Transaction.countDocuments(query);
+    const total = await Transaction.countDocuments(filter);
 
-    res.json({ transactions, total });
+    res.json({
+      transactions,
+      pagination: {
+        total,
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
+        pages: Math.ceil(total / parseInt(limit, 10))
+      }
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// GET /api/transactions/:id
+// GET /api/transactions/:id (Single transaction detail with SHAP attributions)
 router.get('/:id', async (req, res) => {
   try {
     const transaction = await Transaction.findOne({ transactionId: req.params.id });
