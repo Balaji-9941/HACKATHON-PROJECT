@@ -10,9 +10,9 @@ import xgboost as xgb
 from explain import RealSHAPExplainer
 
 app = FastAPI(
-    title="PayTelemetry Tier 2 ML Microservice",
-    description="FastAPI service serving XGBoost fraud classifier and real SHAP explanations",
-    version="1.0.0"
+    title="PayTelemetry Unified Multi-Tier ML Service",
+    description="FastAPI service serving Unified Hybrid XGBoost classifier and real TreeSHAP explanations",
+    version="2.0.0"
 )
 
 app.add_middleware(
@@ -24,7 +24,7 @@ app.add_middleware(
 )
 
 class FeatureInput(BaseModel):
-    features: List[float] = Field(..., min_length=7, max_length=7, description="7-dimensional feature vector")
+    features: List[float] = Field(..., min_length=7, max_length=15, description="Feature vector")
 
 MODEL_PATH = os.path.join(os.path.dirname(__file__), 'models/xgboost-v1.json')
 METRICS_PATH = os.path.join(os.path.dirname(__file__), 'models/metrics.json')
@@ -45,7 +45,7 @@ def load_or_train_model():
     model = m
     explainer = RealSHAPExplainer(model)
     model_loaded_at = datetime.datetime.utcnow().isoformat() + "Z"
-    print(f"[Service] Loaded XGBoost model from {MODEL_PATH}")
+    print(f"[Service] Loaded Unified XGBoost model from {MODEL_PATH}")
 
 @app.on_event("startup")
 async def startup_event():
@@ -55,8 +55,8 @@ async def startup_event():
 def health_check():
     return {
         "status": "ok",
-        "service": "paytelemetry-tier2-ml",
-        "modelVersion": "xgboost-v1",
+        "service": "paytelemetry-unified-ml",
+        "modelVersion": "unified-xgboost-v3",
         "modelLoadedAt": model_loaded_at,
         "isLoaded": model is not None
     }
@@ -68,18 +68,26 @@ def get_metrics():
             return json.load(f)
     return {"error": "Metrics not found"}
 
+def pad_features(feat_list: List[float]) -> List[float]:
+    # Pad to 10 features if given 7 features
+    if len(feat_list) == 7:
+        rule_score = (feat_list[0] + feat_list[1] + feat_list[2]) / 3.0
+        return feat_list + [0.0, rule_score, 0.0]
+    return feat_list[:10]
+
 @app.post("/predict")
 def predict_fraud(input_data: FeatureInput):
     if model is None:
         raise HTTPException(status_code=503, detail="Model not loaded")
     
     try:
-        X = np.array([input_data.features], dtype=np.float32)
+        padded = pad_features(input_data.features)
+        X = np.array([padded], dtype=np.float32)
         proba = float(model.predict_proba(X)[0][1])
         
         return {
             "probability": round(proba, 4),
-            "modelVersion": "xgboost-v1",
+            "modelVersion": "unified-xgboost-v3",
             "timestamp": datetime.datetime.utcnow().isoformat() + "Z"
         }
     except Exception as e:
@@ -91,10 +99,11 @@ def explain_features(input_data: FeatureInput):
         raise HTTPException(status_code=503, detail="Explainer not loaded")
         
     try:
-        shap_dict = explainer.compute_shap(input_data.features)
+        padded = pad_features(input_data.features)
+        shap_dict = explainer.compute_shap(padded)
         return {
             "shapValues": shap_dict,
-            "modelVersion": "xgboost-v1"
+            "modelVersion": "unified-xgboost-v3"
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

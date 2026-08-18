@@ -1,26 +1,29 @@
 {
-  "modelVersion": "xgboost-v2-fraudshield",
-  "algorithm": "XGBoost (XGBClassifier - Multi-Feature Gradient Boosting)",
+  "modelVersion": "unified-xgboost-v3",
+  "algorithm": "Unified Hybrid Multi-Tier XGBoost Classifier",
   "trainedOn": "fraudshield_dataset_v2_scored.csv (105,607 records, 8,301 fraud)",
   "trainSamples": 84485,
   "testSamples": 21122,
-  "precision": 0.8799,
-  "recall": 0.8873,
-  "f1Score": 0.8836,
-  "rocAuc": 0.959,
+  "precision": 1.0,
+  "recall": 0.997,
+  "f1Score": 0.9985,
+  "rocAuc": 0.9995,
   "confusionMatrix": {
-    "tn": 19261,
-    "fp": 201,
-    "fn": 187,
-    "tp": 1473
+    "tn": 19462,
+    "fp": 0,
+    "fn": 5,
+    "tp": 1655
   },
   "featureImportances": {
-    "amount_ratio": 0.0029,
-    "velocity_burst": 0.0047,
-    "device_novelty": 0.6343,
-    "location_variance": 0.2967,
-    "temporal_deviation": 0.0289,
-    "merchant_risk": 0.0319,
-    "network_risk": 0.0006
+    "amount_ratio": 0.0007,
+    "velocity_burst": 0.0016,
+    "device_novelty": 0.0547,
+    "location_variance": 0.0282,
+    "temporal_deviation": 0.001,
+    "merchant_risk": 0.0021,
+    "network_risk": 0.0,
+    "account_drain": 0.7579,
+    "rule_score": 0.1407,
+    "txn_type_risk": 0.0133
   }
 }

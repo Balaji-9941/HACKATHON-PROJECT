@@ -13,7 +13,10 @@ FEATURE_NAMES = [
     'location_variance',
     'temporal_deviation',
     'merchant_risk',
-    'network_risk'
+    'network_risk',
+    'account_drain',
+    'rule_score',
+    'txn_type_risk'
 ]
 
 CSV_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../fraudshield_dataset_v2_scored.csv'))
@@ -27,16 +30,16 @@ def load_data():
     print(f"[Train] Loaded dataframe with shape: {df.shape}")
 
     # Feature 1: amount_ratio (amountToBaselineRatio)
-    amount_ratio = df['amountToBaselineRatio'].fillna(1.0).clip(0, 50).values
+    amount_ratio = np.log1p(df['amountToBaselineRatio'].fillna(1.0)).clip(0, 10).values / 5.0
 
-    # Feature 2: velocity_burst (txnCountLast24h normalized)
-    velocity_burst = (df['txnCountLast24h'].fillna(1.0) / 5.0).clip(0, 10).values
+    # Feature 2: velocity_burst (txnCountLast24h)
+    velocity_burst = (df['txnCountLast24h'].fillna(1.0) / 10.0).clip(0, 5).values
 
-    # Feature 3: device_novelty (1.0 if deviceId contains 'DEV-NEW-' or novel device)
+    # Feature 3: device_novelty (1.0 if deviceId contains 'DEV-NEW-')
     device_novelty = df['deviceId'].astype(str).apply(lambda x: 1.0 if 'DEV-NEW-' in x else 0.0).values
 
-    # Feature 4: location_variance (distanceFromHomeKm normalized, >500km = 1.0)
-    location_variance = (df['distanceFromHomeKm'].fillna(0.0) / 1000.0).clip(0, 5).values
+    # Feature 4: location_variance (log distance from home km)
+    location_variance = (np.log1p(df['distanceFromHomeKm'].fillna(0.0)) / 10.0).clip(0, 2).values
 
     # Feature 5: temporal_deviation (1.0 if transaction in unusual hour 00:00 - 05:00)
     def parse_hour_dev(ts_str):
@@ -47,14 +50,23 @@ def load_data():
             return 0.0
     temporal_deviation = df['timestamp'].apply(parse_hour_dev).values
 
-    # Feature 6: merchant_risk (1.0 for high risk categories: Crypto, Wire Transfer, Quick Loan, Peer Payment to stranger)
+    # Feature 6: merchant_risk
     high_risk_cats = {'Wire Transfer', 'Peer Payment', 'Digital Wallet', 'Foreign Exchange', 'Gaming'}
     merchant_risk = df['merchantCategory'].astype(str).apply(lambda x: 1.0 if x in high_risk_cats else 0.2).values
 
-    # Feature 7: network_risk (1.0 if linkedToFraudNetwork is True)
+    # Feature 7: network_risk (linkedToFraudNetwork)
     network_risk = df['linkedToFraudNetwork'].apply(lambda x: 1.0 if str(x).lower() == 'true' else 0.0).values
 
-    # Stack features into X
+    # Feature 8: account_drain (isFullAccountDrain)
+    account_drain = df['isFullAccountDrain'].astype(str).apply(lambda x: 1.0 if x.lower() == 'true' else 0.0).values
+
+    # Feature 9: rule_score (Tier 1 deterministic rule score 0-100 normalized)
+    rule_score = (df['ruleScore'].fillna(0.0) / 100.0).clip(0, 1).values
+
+    # Feature 10: txn_type_risk (TRANSFER / CASH_OUT = 1.0)
+    txn_type_risk = df['transactionType'].apply(lambda x: 1.0 if x in ['TRANSFER', 'CASH_OUT'] else 0.0).values
+
+    # Stack into unified feature matrix X
     X = np.column_stack([
         amount_ratio,
         velocity_burst,
@@ -62,13 +74,16 @@ def load_data():
         location_variance,
         temporal_deviation,
         merchant_risk,
-        network_risk
+        network_risk,
+        account_drain,
+        rule_score,
+        txn_type_risk
     ]).astype(np.float32)
 
     # Target label y: isFraud (0 or 1)
     y = df['isFraud'].fillna(0).astype(np.int32).values
 
-    print(f"[Train] Extracted feature matrix X: {X.shape}, labels y: {np.bincount(y)}")
+    print(f"[Train] Extracted unified feature matrix X: {X.shape}, labels y: {np.bincount(y)}")
     return X, y
 
 def train_model():
@@ -83,21 +98,21 @@ def train_model():
     neg_count = np.sum(y_train == 0)
     pos_count = max(1, np.sum(y_train == 1))
     scale_weight = float(neg_count / pos_count)
-    print(f"[Train] Training on {len(X_train)} samples with scale_pos_weight: {scale_weight:.2f}")
+    print(f"[Train] Training unified model on {len(X_train)} samples with scale_pos_weight: {scale_weight:.2f}")
     
     model = xgb.XGBClassifier(
-        n_estimators=100,
-        max_depth=5,
-        learning_rate=0.08,
+        n_estimators=150,
+        max_depth=6,
+        learning_rate=0.06,
         scale_pos_weight=scale_weight,
         eval_metric='logloss',
-        subsample=0.8,
-        colsample_bytree=0.8,
+        subsample=0.85,
+        colsample_bytree=0.85,
         random_state=42,
         tree_method='hist'
     )
     
-    print(f"[Train] Fitting XGBoost classifier...")
+    print(f"[Train] Fitting Unified Multi-Tier XGBoost Classifier...")
     model.fit(X_train, y_train)
     
     # Evaluate on held-out test split
@@ -112,8 +127,8 @@ def train_model():
     cm = confusion_matrix(y_test, y_pred).tolist()
     
     metrics = {
-        'modelVersion': 'xgboost-v2-fraudshield',
-        'algorithm': 'XGBoost (XGBClassifier - Multi-Feature Gradient Boosting)',
+        'modelVersion': 'unified-xgboost-v3',
+        'algorithm': 'Unified Hybrid Multi-Tier XGBoost Classifier',
         'trainedOn': f'fraudshield_dataset_v2_scored.csv ({len(X):,} records, {int(np.sum(y)):,} fraud)',
         'trainSamples': int(len(X_train)),
         'testSamples': int(len(X_test)),
@@ -140,13 +155,13 @@ def train_model():
     # Save model artifact
     model_path = os.path.join(models_dir, 'xgboost-v1.json')
     model.save_model(model_path)
-    print(f"[Train] Model successfully saved to {model_path}")
+    print(f"[Train] Unified Model saved to {model_path}")
     
     # Save real metrics.json
     metrics_path = os.path.join(models_dir, 'metrics.json')
     with open(metrics_path, 'w', encoding='utf-8') as f:
         json.dump(metrics, f, indent=2)
-    print(f"[Train] Ground-truth test metrics saved to {metrics_path}:")
+    print(f"[Train] Measured ground-truth test metrics saved to {metrics_path}:")
     print(json.dumps(metrics, indent=2))
     
     return metrics

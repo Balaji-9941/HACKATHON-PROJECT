@@ -8,7 +8,10 @@ FEATURE_NAMES = [
     'location_variance',
     'temporal_deviation',
     'merchant_risk',
-    'network_risk'
+    'network_risk',
+    'account_drain',
+    'rule_score',
+    'txn_type_risk'
 ]
 
 class RealSHAPExplainer:
@@ -18,12 +21,11 @@ class RealSHAPExplainer:
 
     def compute_shap(self, feature_vector):
         """
-        Computes exact SHAP values for an input vector using shap.TreeExplainer
+        Computes exact TreeSHAP values for an input vector
         """
         X = np.array([feature_vector], dtype=np.float32)
         shap_values = self.explainer.shap_values(X)
         
-        # shap_values shape for binary classifier: array of shape (1, num_features) or list
         if isinstance(shap_values, list):
             vals = shap_values[1][0] if len(shap_values) > 1 else shap_values[0][0]
         else:
