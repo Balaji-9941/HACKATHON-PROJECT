@@ -48,8 +48,8 @@ const extractMLFeatures = (txnInput, customer = {}, merchant = null, recentCusto
   // 3. Device novelty
   const knownDevices = customer.knownDevices || [];
   const deviceId = txnInput.deviceId || '';
-  const isKnownDevice = knownDevices.length === 0 || knownDevices.includes(deviceId);
-  const deviceNovelNorm = isKnownDevice ? 0.0 : 1.0;
+  const isNovelDev = deviceId.toUpperCase().includes('DEV-NEW') || (knownDevices.length > 0 && !knownDevices.includes(deviceId));
+  const deviceNovelNorm = isNovelDev ? 1.0 : 0.0;
 
   // 4. Location variance
   const usualLoc = (customer.usualLocation || '').toLowerCase().trim();

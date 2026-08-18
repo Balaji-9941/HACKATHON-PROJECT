@@ -36,7 +36,7 @@ const triggerScenario = async (scenarioType, flowSource = 'manual_injection', io
 
   switch (scenarioType) {
     case SCENARIO_TYPES.VELOCITY_BURST: {
-      const amount = Math.round(customer.avgTransaction * 1.5);
+      const amount = Math.round((customer.avgTransaction || 500) * 1.5);
       recipientUpiId = 'amazonpay@apl';
       recipientName = 'Amazon India Retail';
       merchantCategory = 'ecommerce';
@@ -46,7 +46,7 @@ const triggerScenario = async (scenarioType, flowSource = 'manual_injection', io
         await Transaction.create({
           transactionId: `TXN-BURST-${Date.now()}-${i}`,
           customerId: customer.customerId,
-          amount: Math.round(customer.avgTransaction * 0.8),
+          amount: Math.round((customer.avgTransaction || 500) * 0.8),
           recipientUpiId,
           recipientName,
           merchantCategory,
@@ -61,7 +61,7 @@ const triggerScenario = async (scenarioType, flowSource = 'manual_injection', io
           riskBreakdown: { velocityBurst: i * 4 },
           fraudExplanation: 'Velocity burst test vector.',
           modelTier: 2,
-          modelVersion: 'xgboost-ml-v3',
+          modelVersion: 'unified-xgboost-v3',
           alertSeverity: 'low',
           userFrictionLevel: 'banner'
         });
@@ -79,7 +79,7 @@ const triggerScenario = async (scenarioType, flowSource = 'manual_injection', io
     }
 
     case SCENARIO_TYPES.DEVICE_TAKEOVER: {
-      const amount = Math.round(customer.avgTransaction * 9.5);
+      const amount = 48000;
       recipientUpiId = 'quickdisbursal@fintech';
       recipientName = 'FastCash Quick Loan Servicing';
       merchantCategory = 'financial_services';
@@ -87,8 +87,8 @@ const triggerScenario = async (scenarioType, flowSource = 'manual_injection', io
 
       txnInput = {
         amount,
-        location: customer.usualLocation,
-        deviceId: 'dev-unrecognized-takeover-991',
+        location: 'Kolkata, IN',
+        deviceId: 'DEV-NEW-TAKEOVER-991',
         deviceName: 'Generic Linux Emulator',
         merchantCategory,
         timestamp: now
@@ -97,7 +97,7 @@ const triggerScenario = async (scenarioType, flowSource = 'manual_injection', io
     }
 
     case SCENARIO_TYPES.IMPOSSIBLE_TRAVEL: {
-      const amount = Math.round(customer.avgTransaction * 4.2);
+      const amount = 35000;
       recipientUpiId = 'royalwin@offshorepay';
       recipientName = 'Offshore Gaming & Casino';
       merchantCategory = 'gambling';
@@ -109,7 +109,7 @@ const triggerScenario = async (scenarioType, flowSource = 'manual_injection', io
       txnInput = {
         amount,
         location: 'Moscow, RU',
-        deviceId: 'dev-foreign-proxy-88',
+        deviceId: 'DEV-NEW-FOREIGN-PROXY-88',
         deviceName: 'Foreign Node',
         merchantCategory,
         timestamp: offsetDate
@@ -118,7 +118,7 @@ const triggerScenario = async (scenarioType, flowSource = 'manual_injection', io
     }
 
     case SCENARIO_TYPES.MULE_RING: {
-      const amount = Math.min(customer.balance || 45000, 38000);
+      const amount = 44000;
       recipientUpiId = 'p2pdesk@cryptopay';
       recipientName = 'CryptoExchange P2P Desk';
       merchantCategory = 'crypto_virtual';
@@ -127,7 +127,7 @@ const triggerScenario = async (scenarioType, flowSource = 'manual_injection', io
       txnInput = {
         amount,
         location: 'Kolkata, IN',
-        deviceId: 'dev-mule-aggregator-01',
+        deviceId: 'DEV-NEW-MULE-AGGREGATOR-01',
         deviceName: 'Mule Terminal Cluster',
         merchantCategory,
         timestamp: now
@@ -163,10 +163,16 @@ const triggerScenario = async (scenarioType, flowSource = 'manual_injection', io
     timestamp: { $gte: cutoff }
   }).select('timestamp');
 
+  // Override customer balance baseline so full account drain is properly recognized
+  const customerProfile = {
+    ...customer.toObject(),
+    balance: Math.max(50000, Number(customer.balance) || 50000)
+  };
+
   // Direct 100% Pure ML Evaluation
   const assessment = await evaluateMLTransaction(
     txnInput,
-    customer,
+    customerProfile,
     { riskTier: merchantRiskTier },
     recentTxns
   );
@@ -199,7 +205,7 @@ const triggerScenario = async (scenarioType, flowSource = 'manual_injection', io
     modelTier: 2,
     mlProbability: assessment.mlProbability,
     shapValues: assessment.shapValues,
-    modelVersion: assessment.modelVersion || 'xgboost-ml-v3',
+    modelVersion: assessment.modelVersion || 'unified-xgboost-v3',
     alertSeverity: assessment.alertSeverity,
     userFrictionLevel: assessment.userFrictionLevel,
     latencyMs: assessment.latencyMs,
