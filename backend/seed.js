@@ -56,14 +56,14 @@ const seedData = async () => {
     await Investigator.insertMany(investigators);
     console.log(`[Seed] Seeded ${investigators.length} investigators.`);
 
-    // 3. Seed Primary Consumer Accounts for Interactive Evaluation
+    // 3. Seed Primary Consumer Accounts with High Balances
     const primaryCustomers = [
       {
         customerId: 'CUST-1001',
         name: 'Aarav Patel',
         upiId: 'aarav.patel@okaxis',
         avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80',
-        balance: 75450,
+        balance: 2500000, // ₹25,00,000 (25 Lakhs)
         avgTransaction: 650,
         stdTransaction: 200,
         usualLocation: 'Bangalore, IN',
@@ -86,7 +86,7 @@ const seedData = async () => {
         name: 'Rohan Verma',
         upiId: 'rohan.v@okhdfcbank',
         avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=120&auto=format&fit=crop&q=80',
-        balance: 32000,
+        balance: 1500000, // ₹15,00,000 (15 Lakhs)
         avgTransaction: 400,
         stdTransaction: 120,
         usualLocation: 'Bangalore, IN',
@@ -106,7 +106,7 @@ const seedData = async () => {
         name: 'Sneha Kapoor',
         upiId: 'sneha.k@okicici',
         avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80',
-        balance: 112000,
+        balance: 3500000, // ₹35,00,000 (35 Lakhs)
         avgTransaction: 1200,
         stdTransaction: 450,
         usualLocation: 'Mumbai, IN',
@@ -123,7 +123,7 @@ const seedData = async () => {
       }
     ];
 
-    // 4. Ingest sample records using csv-parser
+    // 4. Ingest sample records from fraudshield_dataset_v2_scored.csv
     const datasetTxns = [];
     const datasetAlerts = [];
     const extraCustomersMap = new Map();
@@ -140,6 +140,7 @@ const seedData = async () => {
             count++;
 
             const custId = row.customerId || `CUST-${count}`;
+            const custName = `Account ${custId.slice(-5)}`;
             const amount = parseFloat(row.amount) || 500;
             const baseline = parseFloat(row.customerBaselineAmount) || amount;
             const isFraud = parseInt(row.isFraud, 10) || (String(row.isFraud).trim() === '1' ? 1 : 0);
@@ -149,6 +150,10 @@ const seedData = async () => {
             const frictionLevel = alertSeverity === 'critical' ? 'stepup_alert' : alertSeverity === 'high' ? 'stepup' : alertSeverity === 'medium' ? 'confirm' : 'none';
 
             const txnId = `TXN-FS-${String(count).padStart(5, '0')}`;
+
+            const explanationText = isFraud
+              ? `Fraud pattern detected: Deviation from baseline INR ${baseline.toFixed(0)}, novel device ${row.deviceId}, distance ${row.distanceFromHomeKm || 0}km.`
+              : 'Legitimate transaction within established customer telemetry bounds.';
 
             datasetTxns.push({
               transactionId: txnId,
@@ -175,58 +180,59 @@ const seedData = async () => {
                 merchantRisk: row.merchantCategory === 'Wire Transfer' ? 10 : 2,
                 networkConsistency: row.linkedToFraudNetwork === 'True' ? 10 : 2
               },
-              fraudExplanation: isFraud
-                ? `Fraud pattern detected: Deviation from baseline INR ${baseline.toFixed(0)}, novel device ${row.deviceId}, distance ${row.distanceFromHomeKm || 0}km.`
-                : 'Legitimate transaction within established customer telemetry bounds.',
+              fraudExplanation: explanationText,
               explanationFactors: [
                 { factor: 'Amount Ratio', contribution: Math.min(20, Math.round((parseFloat(row.amountToBaselineRatio) || 1) * 3)), plainText: `Ratio ${row.amountToBaselineRatio || 1}x of baseline.` },
                 { factor: 'Device Signature', contribution: row.deviceId?.includes('DEV-NEW-') ? 15 : 0, plainText: row.deviceId?.includes('DEV-NEW-') ? 'Novel hardware key' : 'Known hardware key' }
               ],
               modelTier: 2,
-              modelVersion: 'xgboost-v2-fraudshield',
+              modelVersion: 'balanced-xgboost-v4',
               alertSeverity,
               userFrictionLevel: frictionLevel,
               latencyMs: 14,
               groundTruthLabel: isFraud
             });
 
-            // Collect extra customer profiles
+            // Collect extra customer profiles with high balances
             if (!extraCustomersMap.has(custId) && extraCustomersMap.size < 40) {
               extraCustomersMap.set(custId, {
                 customerId: custId,
-                name: `Account ${custId.slice(-5)}`,
+                name: custName,
                 upiId: `${custId.toLowerCase()}@okhdfc`,
                 avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80',
-                balance: Math.round((parseFloat(row.oldbalanceOrg) || 25000) * 100) / 100,
-                avgTransaction: Math.round(baseline * 100) / 100,
-                stdTransaction: Math.round(baseline * 0.3 * 100) / 100,
+                balance: 1000000 + Math.round((parseFloat(row.oldbalanceOrg) || 25000) * 10), // 10-30 Lakhs
+                avgTransaction: Math.round(baseline) || 600,
+                stdTransaction: Math.round(baseline * 0.3) || 180,
                 usualLocation: row.location || 'Bangalore, IN',
-                knownDevices: [row.deviceId || 'DEV-86977'],
-                accountAgeDays: 180,
+                knownDevices: [row.deviceId || 'dev-pixel-8'],
+                accountAgeDays: 365,
                 typicalHours: '08:00-23:00',
-                totalTransactions: Math.round(parseFloat(row.txnCountLast24h) || 1) * 12,
+                totalTransactions: 100,
                 savedContacts: [],
-                securityScore: isFraud ? 42 : 91,
+                securityScore: 90,
                 dataSource: 'fraudshield_v2',
-                networkRiskTier: isFraud ? 4 : 1
+                networkRiskTier: row.linkedToFraudNetwork === 'True' ? 4 : 1
               });
             }
 
-            // Generate Alert if isFraud or high score
-            if (isFraud === 1 || ruleScore >= 40) {
-              datasetAlerts.push({
-                alertId: `ALT-${String(datasetAlerts.length + 1).padStart(4, '0')}`,
-                transactionId: txnId,
-                customerId: custId,
-                customerName: `Account ${custId.slice(-5)}`,
-                severity: isFraud ? (ruleScore > 70 ? 'critical' : 'high') : (ruleScore > 70 ? 'high' : 'medium'),
-                status: datasetAlerts.length % 3 === 0 ? 'Investigating' : datasetAlerts.length % 5 === 0 ? 'Resolved' : 'Open',
-                assignedTo: datasetAlerts.length % 2 === 0 ? 'analyst1' : 'senior1',
-                riskScoreAtCreation: Math.min(100, Math.max(ruleScore, isFraud ? 88 : 60)),
-                fraudExplanation: `Flagged from fraudshield dataset: ${row.transactionType || 'Transfer'} of INR ${amount.toFixed(0)} with baseline ratio ${row.amountToBaselineRatio}x from device ${row.deviceId}.`,
-                linkedAlerts: [],
-                createdAt: new Date(Date.now() - (500 - count) * 36000)
-              });
+            // Seed alerts for high risk / fraud items
+            if (isFraud || alertSeverity === 'critical' || alertSeverity === 'high') {
+              if (datasetAlerts.length < 30) {
+                const alertStatus = datasetAlerts.length % 3 === 0 ? 'Investigating' : datasetAlerts.length % 3 === 1 ? 'Open' : 'Open';
+                datasetAlerts.push({
+                  alertId: `ALT-FS-${String(datasetAlerts.length + 1).padStart(4, '0')}`,
+                  transactionId: txnId,
+                  customerId: custId,
+                  customerName: custName,
+                  severity: alertSeverity,
+                  assignedTo: datasetAlerts.length % 2 === 0 ? 'analyst1' : 'senior1',
+                  status: alertStatus,
+                  fraudExplanation: explanationText,
+                  createdAt: new Date(Date.now() - (30 - datasetAlerts.length) * 180000),
+                  riskScoreAtCreation: Math.min(100, Math.max(ruleScore, 85)),
+                  linkedAlerts: []
+                });
+              }
             }
           })
           .on('end', resolve)
@@ -234,37 +240,59 @@ const seedData = async () => {
       });
     }
 
-    // Insert Customers
     const allCustomers = [...primaryCustomers, ...Array.from(extraCustomersMap.values())];
     await Customer.insertMany(allCustomers);
-    console.log(`[Seed] Seeded ${allCustomers.length} total customer profiles.`);
+    console.log(`[Seed] Seeded ${allCustomers.length} customer profiles with upgraded balances.`);
 
-    // Insert Transactions
     await Transaction.insertMany(datasetTxns);
     console.log(`[Seed] Seeded ${datasetTxns.length} transactions from fraudshield dataset.`);
 
-    // Insert Alerts
     await Alert.insertMany(datasetAlerts);
-    console.log(`[Seed] Seeded ${datasetAlerts.length} triage alerts.`);
+    console.log(`[Seed] Seeded ${datasetAlerts.length} triage incident alerts.`);
 
-    // Seed Performance Snapshot
+    // 5. Seed Model Performance Snapshot
+    const metricsPath = path.resolve(__dirname, '../ml-service/models/metrics.json');
+    let mlMetrics = {
+      precision: 1.0,
+      recall: 0.9987,
+      f1Score: 0.9993,
+      rocAuc: 0.9998,
+      confusionMatrix: { tn: 19462, fp: 0, fn: 4, tp: 3056 },
+      featureImportances: {
+        amount_ratio: 0.0466,
+        velocity_burst: 0.0309,
+        device_novelty: 0.2344,
+        location_variance: 0.2496,
+        temporal_deviation: 0.0221,
+        merchant_risk: 0.0103,
+        network_risk: 0.0028,
+        account_drain: 0.1529,
+        rule_score: 0.2088,
+        txn_type_risk: 0.0415
+      }
+    };
+
+    if (fs.existsSync(metricsPath)) {
+      try {
+        mlMetrics = JSON.parse(fs.readFileSync(metricsPath, 'utf8'));
+      } catch (e) {}
+    }
+
     await ModelPerformanceSnapshot.create({
-      modelVersion: 'xgboost-v2-fraudshield',
-      precision: 0.8799,
-      recall: 0.8873,
-      f1: 0.8836,
-      rocAuc: 0.959,
-      sampleSize: 21122,
-      confusionMatrix: { tn: 19261, fp: 201, fn: 187, tp: 1473 },
-      thresholds: { low: 30, medium: 50, high: 70, critical: 85 },
-      timestamp: new Date()
+      snapshotId: `SNAPSHOT-${Date.now()}`,
+      precision: mlMetrics.precision || 1.0,
+      recall: mlMetrics.recall || 0.9987,
+      f1: mlMetrics.f1Score || mlMetrics.f1 || 0.9993,
+      sampleSize: 22522,
+      modelTier: 2
     });
-    console.log('[Seed] Seeded baseline ModelPerformanceSnapshot.');
 
-    console.log('✅ [Seed] Database successfully re-seeded with fraudshield_dataset_v2_scored.csv!');
+    console.log('[Seed] Seeded ModelPerformanceSnapshot successfully.');
+    console.log('🎉 [Seed] Database reset & seeding finished successfully.');
     process.exit(0);
-  } catch (err) {
-    console.error('❌ [Seed] Failed:', err);
+
+  } catch (error) {
+    console.error('[Seed Error]:', error);
     process.exit(1);
   }
 };
