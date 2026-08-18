@@ -13,8 +13,8 @@ export const SocketProvider = ({ children }) => {
   const [autoflowStatus, setAutoflowStatus] = useState(null);
 
   useEffect(() => {
-    // In Vite dev proxy, default origin connects directly to backend
-    const s = io(window.location.origin, {
+    const socketUrl = import.meta.env.VITE_API_URL || window.location.origin;
+    const s = io(socketUrl, {
       transports: ['websocket', 'polling']
     });
 
