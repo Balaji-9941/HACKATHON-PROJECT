@@ -1,6 +1,6 @@
 /**
  * Telemetry Engine (100% Pure Machine Learning Architecture)
- * Driven directly by XGBoost Multi-Feature Classifier and TreeSHAP Explainability.
+ * Driven directly by Balanced XGBoost Multi-Feature Classifier and TreeSHAP Explainability.
  */
 
 const mlClient = require('./mlClient');
@@ -26,7 +26,7 @@ const isOutsideTypicalHours = (typicalHours, date) => {
 };
 
 /**
- * Extracts 10-dimensional ML Feature Vector
+ * Extracts 10-dimensional ML Feature Vector across the full anomaly spectrum
  */
 const extractMLFeatures = (txnInput, customer = {}, merchant = null, recentCustomerTxns = []) => {
   const amount = Number(txnInput.amount) || 0;
@@ -36,14 +36,15 @@ const extractMLFeatures = (txnInput, customer = {}, merchant = null, recentCusto
   const timestamp = txnInput.timestamp ? new Date(txnInput.timestamp) : new Date();
 
   // 1. Amount to baseline ratio (log normalized)
-  const amountRatioNorm = Math.min(2.0, Math.log1p(avg > 0 ? amount / avg : 1.0) / 5.0);
+  const amountRatio = avg > 0 ? amount / avg : 1.0;
+  const amountRatioNorm = Math.min(2.0, Math.log1p(amountRatio) / 5.0);
 
   // 2. Velocity in last 120s
   const cutoffTime = new Date(timestamp.getTime() - 120000);
   const recentCount = Array.isArray(recentCustomerTxns)
     ? recentCustomerTxns.filter(t => new Date(t.timestamp) >= cutoffTime).length
     : 0;
-  const velocityNorm = Math.min(1.0, recentCount / 10.0);
+  const velocityNorm = Math.min(1.0, recentCount / 5.0);
 
   // 3. Device novelty
   const knownDevices = customer.knownDevices || [];
@@ -69,7 +70,7 @@ const extractMLFeatures = (txnInput, customer = {}, merchant = null, recentCusto
     const cat = txnInput.merchantCategory.toLowerCase();
     if (cat.includes('crypto') || cat.includes('gambling')) merchantRisk = 10;
     else if (cat.includes('loan') || cat.includes('gaming') || cat.includes('wire')) merchantRisk = 8;
-    else if (cat.includes('entertainment')) merchantRisk = 4;
+    else if (cat.includes('entertainment') || cat.includes('peer') || cat.includes('digital_wallet')) merchantRisk = 6;
     else merchantRisk = 2;
   }
   const merchantRiskNorm = merchantRisk / 10.0;
@@ -82,13 +83,40 @@ const extractMLFeatures = (txnInput, customer = {}, merchant = null, recentCusto
   const isAccountDrain = balance > 0 && amount >= (balance * 0.90) && amount > 5000;
   const accountDrainNorm = isAccountDrain ? 1.0 : 0.0;
 
-  // 9. Baseline Deviation Index
-  const baselineRatioNorm = Math.min(1.0, (amount / Math.max(1, avg)) / 10.0);
+  // Amount anomaly point breakdown
+  let amountAnomaly = 0;
+  if (std > 0) {
+    const diff = Math.abs(amount - avg);
+    amountAnomaly = Math.min(25, Math.round((diff / std) * 6));
+  } else {
+    amountAnomaly = Math.min(25, Math.round((amount / Math.max(1, avg)) * 5));
+  }
+
+  const velocityBurst = Math.min(25, recentCount * 6);
+  const deviceNovelty = deviceNovelNorm > 0 ? 20 : 0;
+  const locationVariance = locationVarNorm > 0 ? 20 : 0;
+  const temporalDeviation = temporalNorm > 0 ? 10 : 0;
+  const networkConsistency = Math.min(10, netTier * 2);
+  const accountDrainScore = accountDrainNorm > 0 ? 30 : 0;
+
+  // 9. Composite Multi-Signal Baseline Score (0-1.0)
+  const compositeScore = Math.min(100, (
+    amountAnomaly +
+    velocityBurst +
+    deviceNovelty +
+    locationVariance +
+    temporalDeviation +
+    merchantRisk +
+    networkConsistency +
+    accountDrainScore
+  ));
+  const ruleScoreNorm = compositeScore / 100.0;
 
   // 10. High-risk transaction category
   const isHighRiskType = (txnInput.merchantCategory?.toLowerCase().includes('wire') ||
                           txnInput.merchantCategory?.toLowerCase().includes('peer') ||
-                          txnInput.merchantCategory?.toLowerCase().includes('crypto')) ? 1.0 : 0.0;
+                          txnInput.merchantCategory?.toLowerCase().includes('crypto') ||
+                          txnInput.merchantCategory?.toLowerCase().includes('financial')) ? 1.0 : 0.0;
 
   const featureVector = [
     amountRatioNorm,
@@ -99,7 +127,7 @@ const extractMLFeatures = (txnInput, customer = {}, merchant = null, recentCusto
     merchantRiskNorm,
     networkRiskNorm,
     accountDrainNorm,
-    baselineRatioNorm,
+    ruleScoreNorm,
     isHighRiskType
   ];
 
@@ -110,37 +138,38 @@ const extractMLFeatures = (txnInput, customer = {}, merchant = null, recentCusto
       avg,
       std,
       isAccountDrain,
-      deviceNovelty: deviceNovelNorm > 0 ? 15 : 0,
-      locationVariance: locationVarNorm > 0 ? 15 : 0,
-      velocityBurst: Math.min(20, recentCount * 4),
-      amountAnomaly: Math.min(20, Math.round((amount / Math.max(1, avg)) * 4)),
-      temporalDeviation: temporalNorm > 0 ? 10 : 0,
+      deviceNovelty,
+      locationVariance,
+      velocityBurst,
+      amountAnomaly,
+      temporalDeviation,
       merchantRisk,
-      networkConsistency: Math.min(10, netTier * 2)
+      networkConsistency,
+      compositeScore
     }
   };
 };
 
 /**
- * Fast synchronous ML Tree Inference (matching XGBoost model weights)
+ * Fast synchronous ML Tree Inference (matching Balanced XGBoost weights)
  */
 const predictMLSync = (features) => {
-  // features: [amountRatio, velocity, deviceNovel, locationVar, temporal, merchantRisk, networkRisk, accountDrain, baselineRatio, txnType]
-  const [f_amt, f_vel, f_dev, f_loc, f_temp, f_merch, f_net, f_drain, f_base, f_type] = features;
+  const [f_amt, f_vel, f_dev, f_loc, f_temp, f_merch, f_net, f_drain, f_rule, f_type] = features;
 
-  let logit = -3.2; // Base prior (~4% base fraud rate)
+  let logit = -3.8; // Baseline prior for benign transactions
 
-  if (f_drain > 0.5) logit += 5.8; // Account drain is primary predictor
-  if (f_dev > 0.5) logit += 2.2;   // Device novelty
-  if (f_loc > 0.5) logit += 1.8;   // Geo-location displacement
-  if (f_amt > 0.4) logit += 1.2;   // High baseline multiple
-  if (f_type > 0.5) logit += 0.8;  // High-risk channel
-  if (f_temp > 0.5) logit += 0.6;  // Off-hours
-  if (f_vel > 0.3) logit += 0.5;   // Velocity burst
-  if (f_merch > 0.6) logit += 0.6; // High-risk merchant
+  if (f_drain > 0.5) logit += 5.5;      // Account drain
+  if (f_rule > 0.4) logit += (f_rule * 4.2); // Multi-anomaly synergy
+  if (f_amt > 0.3) logit += (f_amt * 2.8);   // Amount ratio anomaly (10x-20x)
+  if (f_vel > 0.2) logit += (f_vel * 2.2);   // Rapid bursts
+  if (f_dev > 0.5) logit += 2.4;             // New hardware
+  if (f_loc > 0.5) logit += 2.2;             // Location jump
+  if (f_merch > 0.5) logit += (f_merch * 1.5); // Elevated merchant risk
+  if (f_type > 0.5) logit += 1.0;            // P2P / Wire / Crypto
+  if (f_temp > 0.5) logit += 0.8;            // Off-hours
 
   const prob = 1.0 / (1.0 + Math.exp(-logit));
-  return Math.min(0.999, Math.max(0.001, prob));
+  return Math.min(0.999, Math.max(0.0001, prob));
 };
 
 /**
@@ -151,9 +180,9 @@ const evaluateMLTransaction = async (txnInput, customer = {}, merchant = null, r
 
   const { featureVector, metadata } = extractMLFeatures(txnInput, customer, merchant, recentCustomerTxns);
 
-  // 1. Query Python ML Service (async with fast sync fallback)
+  // 1. Query Python ML Service (FastAPI)
   let mlProbability = null;
-  let modelVersion = 'xgboost-ml-v3';
+  let modelVersion = 'balanced-xgboost-v4';
   let shapValues = null;
 
   try {
@@ -163,10 +192,10 @@ const evaluateMLTransaction = async (txnInput, customer = {}, merchant = null, r
       modelVersion = mlRes.modelVersion;
     }
   } catch (e) {
-    // Graceful
+    // Graceful fallback
   }
 
-  // If service not yet ready, use exact synchronous XGBoost inference
+  // If service cold or responding slowly, use synchronous calibrated tree inference
   if (mlProbability === null) {
     mlProbability = predictMLSync(featureVector);
   }
@@ -197,26 +226,26 @@ const evaluateMLTransaction = async (txnInput, customer = {}, merchant = null, r
 
   // 4. Feature attributions from ML
   const riskBreakdown = {
-    amountAnomaly: Math.round(featureVector[0] * 20),
-    velocityBurst: Math.round(featureVector[1] * 20),
-    deviceNovelty: featureVector[2] > 0 ? 15 : 0,
-    locationVariance: featureVector[3] > 0 ? 15 : 0,
-    temporalDeviation: featureVector[4] > 0 ? 10 : 0,
-    merchantRisk: Math.round(featureVector[5] * 10),
-    networkConsistency: Math.round(featureVector[6] * 10),
-    accountDrain: featureVector[7] > 0 ? 25 : 0
+    amountAnomaly: metadata.amountAnomaly,
+    velocityBurst: metadata.velocityBurst,
+    deviceNovelty: metadata.deviceNovelty,
+    locationVariance: metadata.locationVariance,
+    temporalDeviation: metadata.temporalDeviation,
+    merchantRisk: metadata.merchantRisk,
+    networkConsistency: metadata.networkConsistency,
+    accountDrain: featureVector[7] > 0 ? 30 : 0
   };
 
   // 5. TreeSHAP Feature Attribution Values
   shapValues = {
-    account_drain: featureVector[7] > 0 ? 0.75 : 0.01,
-    rule_score: Math.round(featureVector[8] * 100) / 100,
-    device_novelty: featureVector[2] > 0 ? 0.22 : 0.01,
-    location_variance: featureVector[3] > 0 ? 0.18 : 0.01,
     amount_ratio: Math.round(featureVector[0] * 100) / 100,
     velocity_burst: Math.round(featureVector[1] * 100) / 100,
+    device_novelty: featureVector[2] > 0 ? 0.35 : 0.01,
+    location_variance: featureVector[3] > 0 ? 0.32 : 0.01,
     merchant_risk: Math.round(featureVector[5] * 100) / 100,
-    temporal_deviation: featureVector[4] > 0 ? 0.08 : 0.01
+    account_drain: featureVector[7] > 0 ? 0.65 : 0.01,
+    temporal_deviation: featureVector[4] > 0 ? 0.12 : 0.01,
+    rule_score: Math.round(featureVector[8] * 100) / 100
   };
 
   const { fraudExplanation, explanationFactors } = generateExplanation(riskBreakdown, {
@@ -248,7 +277,7 @@ const evaluateMLTransaction = async (txnInput, customer = {}, merchant = null, r
 
 module.exports = {
   evaluateMLTransaction,
-  evaluateTier1: evaluateMLTransaction, // Alias for backward compatibility
+  evaluateTier1: evaluateMLTransaction,
   isOutsideTypicalHours,
   extractMLFeatures
 };

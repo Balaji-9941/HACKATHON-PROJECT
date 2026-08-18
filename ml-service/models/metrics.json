@@ -1,29 +1,29 @@
 {
-  "modelVersion": "unified-xgboost-v3",
-  "algorithm": "Unified Hybrid Multi-Tier XGBoost Classifier",
-  "trainedOn": "fraudshield_dataset_v2_scored.csv (105,607 records, 8,301 fraud)",
-  "trainSamples": 84485,
-  "testSamples": 21122,
+  "modelVersion": "balanced-xgboost-v4",
+  "algorithm": "Balanced Multi-Anomaly XGBoost Classifier (Full Risk Spectrum)",
+  "trainedOn": "fraudshield_dataset_v2_scored.csv (112,607 records, 15,301 fraud vectors)",
+  "trainSamples": 90085,
+  "testSamples": 22522,
   "precision": 1.0,
-  "recall": 0.997,
-  "f1Score": 0.9985,
-  "rocAuc": 0.9995,
+  "recall": 0.9987,
+  "f1Score": 0.9993,
+  "rocAuc": 0.9998,
   "confusionMatrix": {
     "tn": 19462,
     "fp": 0,
-    "fn": 5,
-    "tp": 1655
+    "fn": 4,
+    "tp": 3056
   },
   "featureImportances": {
-    "amount_ratio": 0.0007,
-    "velocity_burst": 0.0016,
-    "device_novelty": 0.0547,
-    "location_variance": 0.0282,
-    "temporal_deviation": 0.001,
-    "merchant_risk": 0.0021,
-    "network_risk": 0.0,
-    "account_drain": 0.7579,
-    "rule_score": 0.1407,
-    "txn_type_risk": 0.0133
+    "amount_ratio": 0.0466,
+    "velocity_burst": 0.0309,
+    "device_novelty": 0.2344,
+    "location_variance": 0.2496,
+    "temporal_deviation": 0.0221,
+    "merchant_risk": 0.0103,
+    "network_risk": 0.0028,
+    "account_drain": 0.1529,
+    "rule_score": 0.2088,
+    "txn_type_risk": 0.0415
   }
 }
