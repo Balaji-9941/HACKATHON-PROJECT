@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Shield, HelpCircle, Check, Cpu } from 'lucide-react';
+import { ArrowLeft, Shield, HelpCircle, Check, Cpu, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { formatCurrency, getRiskColor } from '../../utils/api';
 
 export default function TransactionDetail({ transaction, onBack, onAcknowledge }) {
@@ -8,23 +8,12 @@ export default function TransactionDetail({ transaction, onBack, onAcknowledge }
   if (!transaction) return null;
 
   const riskStyle = getRiskColor(transaction.alertSeverity);
+  const factors = transaction.explanationFactors || [];
 
   const handleAck = () => {
     setAcknowledged(true);
     if (onAcknowledge) onAcknowledge(transaction.transactionId);
   };
-
-  const riskBreakdown = transaction.riskBreakdown || {};
-
-  const signals = [
-    { label: 'Amount Anomaly', score: riskBreakdown.amountAnomaly || 0, max: 20 },
-    { label: 'Velocity Burst', score: riskBreakdown.velocityBurst || 0, max: 20 },
-    { label: 'Device Novelty', score: riskBreakdown.deviceNovelty || 0, max: 15 },
-    { label: 'Location Variance', score: riskBreakdown.locationVariance || 0, max: 15 },
-    { label: 'Temporal Deviation', score: riskBreakdown.temporalDeviation || 0, max: 10 },
-    { label: 'Merchant Risk', score: riskBreakdown.merchantRisk || 0, max: 10 },
-    { label: 'Network Consistency', score: riskBreakdown.networkConsistency || 0, max: 10 },
-  ];
 
   return (
     <div className="space-y-4 animate-fade-in text-slate-900">
@@ -41,16 +30,16 @@ export default function TransactionDetail({ transaction, onBack, onAcknowledge }
         <span className="text-xs text-slate-500 font-medium">Paid to</span>
         <h2 className="text-base font-bold text-slate-900 truncate">{transaction.recipientName || transaction.recipientUpiId}</h2>
         <p className="text-3xl font-black text-slate-900 font-mono tracking-tight">{formatCurrency(transaction.amount)}</p>
-        <span className={`inline-block px-2.5 py-0.5 text-xs font-mono rounded-md ${riskStyle.badge} mt-2`}>
+        <span className={`inline-block px-2.5 py-0.5 text-xs font-mono font-bold rounded-md ${riskStyle.badge} mt-2`}>
           {transaction.alertSeverity.toUpperCase()} • ML SCORE {transaction.totalRiskScore}/100
         </span>
       </div>
 
       {/* ML Telemetry Analysis */}
-      <div className={`p-4 rounded-xl border ${riskStyle.bg} ${riskStyle.border} space-y-1.5`}>
+      <div className={`p-4 rounded-xl border ${riskStyle.bg} ${riskStyle.border} space-y-2`}>
         <div className="flex items-center space-x-2">
           <Cpu className="w-4 h-4 text-blue-700" />
-          <h4 className="text-xs font-bold text-slate-900">XGBoost ML Classification Analysis</h4>
+          <h4 className="text-xs font-bold text-slate-900">XGBoost ML Classification Inference</h4>
         </div>
         <p className="text-xs text-slate-800 leading-relaxed font-medium">
           {transaction.fraudExplanation}
@@ -65,24 +54,47 @@ export default function TransactionDetail({ transaction, onBack, onAcknowledge }
         )}
       </div>
 
-      {/* 7-Factor Risk Telemetry Meter */}
+      {/* Complete XGBoost Telemetry Factor Inspector (All 10 Signals) */}
       <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-card space-y-3">
-        <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">XGBoost Input Feature Weights</h4>
+        <div className="flex items-center justify-between">
+          <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+            All Calculated Telemetry Factors ({factors.length || 10} Signals)
+          </h4>
+          <span className="text-[10px] font-mono text-slate-500">TreeSHAP Evaluated</span>
+        </div>
+
         <div className="space-y-2">
-          {signals.map((sig, idx) => {
-            const ratio = sig.score / sig.max;
-            const barColor = ratio > 0.6 ? 'bg-rose-600' : ratio > 0.3 ? 'bg-amber-500' : 'bg-emerald-500';
+          {factors.map((f, idx) => {
+            const isFlagged = f.status === 'flagged';
+            const isWarning = f.status === 'warning';
             return (
-              <div key={idx} className="space-y-1">
-                <div className="flex justify-between text-[11px]">
-                  <span className="text-slate-600 font-medium">{sig.label}</span>
-                  <span className="font-mono text-slate-800 font-semibold">{sig.score}/{sig.max}</span>
-                </div>
-                <div className="w-full h-1.5 rounded-full bg-slate-100 overflow-hidden border border-slate-200">
-                  <div
-                    className={`h-full rounded-full ${barColor}`}
-                    style={{ width: `${ratio * 100}%` }}
-                  />
+              <div
+                key={idx}
+                className={`p-2.5 rounded-xl border text-xs flex items-start space-x-2.5 ${
+                  isFlagged
+                    ? 'bg-rose-50/70 border-rose-200 text-rose-950'
+                    : isWarning
+                    ? 'bg-amber-50/70 border-amber-200 text-amber-950'
+                    : 'bg-emerald-50/50 border-emerald-200/80 text-emerald-950'
+                }`}
+              >
+                {isFlagged ? (
+                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                ) : isWarning ? (
+                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                ) : (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-xs">{f.factor}</span>
+                    <span className={`font-mono text-[10px] font-bold px-1.5 py-0.2 rounded ${
+                      isFlagged ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'
+                    }`}>
+                      {isFlagged ? `+${f.contribution} pts` : 'Verified Safe (0 pts)'}
+                    </span>
+                  </div>
+                  <p className="text-[11px] opacity-85 mt-0.5 leading-relaxed">{f.plainText}</p>
                 </div>
               </div>
             );
@@ -98,45 +110,49 @@ export default function TransactionDetail({ transaction, onBack, onAcknowledge }
             <h4 className="text-xs font-bold text-slate-900">Recognize this transfer?</h4>
           </div>
           {acknowledged ? (
-            <span className="text-xs text-emerald-700 font-bold flex items-center space-x-1">
+            <span className="flex items-center space-x-1 text-xs text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
               <Check className="w-3.5 h-3.5" />
-              <span>Confirmed by you</span>
+              <span>Confirmed</span>
             </span>
           ) : (
             <button
               onClick={handleAck}
-              className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition"
+              className="text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-lg border border-blue-200 transition"
             >
-              Yes, it was me
+              Yes, it's me
             </button>
           )}
         </div>
-        <p className="text-[11px] text-slate-500 leading-relaxed font-medium">
-          Confirming recognized transactions trains the model on your hardware keys and reduces verification friction.
+        <p className="text-[11px] text-slate-500">
+          Confirming helps train our in-flight behavioral telemetry models to prevent unnecessary friction on your account.
         </p>
       </div>
 
-      {/* Technical Metadata */}
-      <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
+      {/* Transaction Metadata */}
+      <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-card space-y-2 text-xs">
         <div className="flex justify-between">
-          <span className="text-slate-500">Transaction ID:</span>
-          <span className="font-mono text-slate-900 font-semibold">{transaction.transactionId}</span>
+          <span className="text-slate-500">Transaction ID</span>
+          <span className="font-mono text-slate-900 font-bold">{transaction.transactionId}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-slate-500">Hardware ID:</span>
-          <span className="text-slate-800 font-medium">{transaction.deviceId} ({transaction.deviceName})</span>
+          <span className="text-slate-500">Timestamp</span>
+          <span className="text-slate-700">{new Date(transaction.timestamp).toLocaleString()}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-slate-500">Location:</span>
-          <span className="text-slate-800 font-medium">{transaction.location}</span>
+          <span className="text-slate-500">Originating Location</span>
+          <span className="text-slate-700">{transaction.location}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-slate-500">Timestamp:</span>
-          <span className="text-slate-800">{new Date(transaction.timestamp).toLocaleString()}</span>
+          <span className="text-slate-500">Device Hardware</span>
+          <span className="text-slate-700">{transaction.deviceName || transaction.deviceId}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-slate-500">ML Engine:</span>
-          <span className="font-mono text-blue-700 font-bold">XGBoost Classifier ({transaction.modelVersion || 'xgboost-ml-v3'})</span>
+          <span className="text-slate-500">Model Version</span>
+          <span className="font-mono text-slate-700 font-semibold">{transaction.modelVersion || 'balanced-xgboost-v4'}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-slate-500">Scoring Latency</span>
+          <span className="font-mono text-emerald-700 font-bold">{transaction.latencyMs || 14}ms</span>
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, ArrowRight, Building, MapPin, Smartphone } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Building, MapPin, Smartphone, Cpu, CheckCircle2, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatCurrency, getRiskColor } from '../../utils/api';
 import RiskWarningModal from './RiskWarningModal';
 
@@ -15,8 +15,10 @@ export default function PaymentReview({
   isProcessing,
 }) {
   const [isMediumModalOpen, setIsMediumModalOpen] = useState(false);
+  const [showAllFactors, setShowAllFactors] = useState(true);
 
   const riskStyle = getRiskColor(assessment?.alertSeverity);
+  const factors = assessment?.explanationFactors || [];
 
   const handlePayClick = () => {
     if (assessment?.userFrictionLevel === 'confirm') {
@@ -68,28 +70,80 @@ export default function PaymentReview({
         />
       )}
 
-      {/* Telemetry Breakdown Details */}
-      <div className="p-3.5 rounded-xl bg-white border border-slate-200 space-y-2.5 text-xs shadow-xs">
-        <div className="flex justify-between items-center text-slate-500">
-          <span className="flex items-center space-x-1.5 font-medium">
-            <Building className="w-3.5 h-3.5 text-slate-400" />
-            <span>Paying from:</span>
+      {/* XGBoost Fraud Classification Inference Box with All Factors */}
+      <div className={`p-4 rounded-xl border ${riskStyle.bg} ${riskStyle.border} space-y-2.5`}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Cpu className="w-4 h-4 text-blue-600" />
+            <span className="text-xs font-bold text-slate-900">
+              XGBoost ML Risk Score: {assessment?.totalRiskScore || 0}/100
+            </span>
+          </div>
+          <span className={`text-[10px] font-mono px-2 py-0.5 rounded-md font-bold uppercase ${riskStyle.badge}`}>
+            {assessment?.alertSeverity || 'NONE'}
           </span>
-          <span className="text-slate-800 font-semibold">Axis Bank •••• 4892</span>
         </div>
-        <div className="flex justify-between items-center text-slate-500">
-          <span className="flex items-center space-x-1.5 font-medium">
-            <MapPin className="w-3.5 h-3.5 text-slate-400" />
-            <span>Location:</span>
-          </span>
-          <span className="text-slate-800 font-medium">{customer?.usualLocation || 'Bangalore, IN'}</span>
-        </div>
-        <div className="flex justify-between items-center text-slate-500">
-          <span className="flex items-center space-x-1.5 font-medium">
-            <Smartphone className="w-3.5 h-3.5 text-slate-400" />
-            <span>Device:</span>
-          </span>
-          <span className="text-slate-800 font-medium">{customer?.knownDevices?.[0] || 'Pixel-8-Pro'}</span>
+
+        <p className="text-xs text-slate-800 leading-relaxed font-medium">
+          {assessment?.fraudExplanation}
+        </p>
+
+        {/* Expandable Factor Breakdown for Full Factor Transparency */}
+        {factors.length > 0 && (
+          <div className="pt-2 border-t border-slate-200/80 space-y-2">
+            <button
+              onClick={() => setShowAllFactors(!showAllFactors)}
+              className="flex items-center justify-between w-full text-[11px] font-bold text-slate-700 hover:text-blue-700 transition"
+            >
+              <span>XGBoost Telemetry Factor Inspector ({factors.length} Signals Evaluated)</span>
+              {showAllFactors ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            </button>
+
+            {showAllFactors && (
+              <div className="space-y-1.5 pt-1">
+                {factors.map((f, i) => {
+                  const isFlagged = f.status === 'flagged';
+                  const isWarning = f.status === 'warning';
+                  return (
+                    <div
+                      key={i}
+                      className={`p-2 rounded-lg border text-[11px] flex items-start space-x-2 ${
+                        isFlagged
+                          ? 'bg-rose-50 border-rose-200 text-rose-900'
+                          : isWarning
+                          ? 'bg-amber-50 border-amber-200 text-amber-900'
+                          : 'bg-emerald-50/70 border-emerald-200 text-emerald-900'
+                      }`}
+                    >
+                      {isFlagged ? (
+                        <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0 mt-0.5" />
+                      ) : isWarning ? (
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                      ) : (
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold">{f.factor}</span>
+                          <span className={`font-mono text-[10px] font-semibold px-1 rounded ${
+                            isFlagged ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'
+                          }`}>
+                            {isFlagged ? `+${f.contribution} pts` : 'Verified (0 pts)'}
+                          </span>
+                        </div>
+                        <p className="text-[10px] opacity-90 mt-0.5 leading-normal">{f.plainText}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between text-[10px] text-slate-500 font-mono">
+          <span>Engine: <strong className="text-blue-700">Balanced XGBoost v4</strong></span>
+          <span>Latency: <strong className="text-emerald-700 font-bold">{assessment?.latencyMs || assessment?.serverLatencyMs || 12}ms</strong></span>
         </div>
       </div>
 

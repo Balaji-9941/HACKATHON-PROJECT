@@ -259,8 +259,11 @@ const evaluateMLTransaction = async (txnInput, customer = {}, merchant = null, r
     amount: metadata.amount,
     customer,
     location: txnInput.location,
+    deviceId: txnInput.deviceId,
     deviceName: txnInput.deviceName,
-    timestamp: txnInput.timestamp || new Date()
+    merchantCategory: txnInput.merchantCategory || (merchant ? merchant.category : 'peer_to_peer'),
+    timestamp: txnInput.timestamp || new Date(),
+    recentTxns: recentCustomerTxns
   });
 
   const endHrTime = process.hrtime.bigint();
