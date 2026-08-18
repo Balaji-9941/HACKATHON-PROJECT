@@ -16,26 +16,42 @@ export default function MetricsStrip({ metrics, health }) {
     {
       title: 'Scored Transactions',
       val: (m.totalScored || 0).toLocaleString(),
-      sub: 'Real-time telemetry baseline',
-      icon: Activity
+      sub: 'Real-time telemetry stream',
+      icon: Activity,
+      iconBg: 'bg-blue-50 border-blue-200 text-blue-600',
+      numColor: 'text-slate-900',
+      tag: 'Live Feed',
+      tagColor: 'bg-blue-50 text-blue-700 border-blue-200'
     },
     {
       title: 'Flagged Incidents',
       val: (m.fraudCaught || 0).toLocaleString(),
       sub: `Intervention rate: ${((m.fraudCaught / Math.max(1, m.totalScored)) * 100).toFixed(1)}%`,
-      icon: ShieldAlert
+      icon: ShieldAlert,
+      iconBg: 'bg-rose-50 border-rose-200 text-rose-600',
+      numColor: 'text-rose-700',
+      tag: 'Alerts Triaged',
+      tagColor: 'bg-rose-50 text-rose-700 border-rose-200'
     },
     {
       title: 'False Positive Rate',
       val: m.fpRate || '0.8%',
       sub: 'Precision target: <1.5%',
-      icon: CheckCircle2
+      icon: CheckCircle2,
+      iconBg: 'bg-emerald-50 border-emerald-200 text-emerald-600',
+      numColor: 'text-emerald-700',
+      tag: 'High Precision',
+      tagColor: 'bg-emerald-50 text-emerald-700 border-emerald-200'
     },
     {
       title: 'Telemetry Latency',
       val: `${m.avgLatencyMs || 14.2}ms`,
-      sub: 'Tier 1 sub-20ms SLA verified',
-      icon: Cpu
+      sub: 'Tier 1 sub-20ms SLA guaranteed',
+      icon: Cpu,
+      iconBg: 'bg-purple-50 border-purple-200 text-purple-600',
+      numColor: 'text-purple-700',
+      tag: 'Sub-20ms SLA',
+      tagColor: 'bg-purple-50 text-purple-700 border-purple-200'
     }
   ];
 
@@ -46,24 +62,29 @@ export default function MetricsStrip({ metrics, health }) {
         return (
           <div
             key={idx}
-            className="p-4 rounded-xl bg-white border border-slate-200 shadow-card space-y-2"
+            className="p-4 rounded-xl bg-white border border-slate-200 shadow-card hover:shadow-card-hover transition space-y-2"
           >
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                 {card.title}
               </span>
-              <div className="w-7 h-7 rounded-md bg-slate-100 border border-slate-200/80 flex items-center justify-center text-slate-700">
-                <Icon className="w-3.5 h-3.5" />
+              <div className={`w-8 h-8 rounded-lg border flex items-center justify-center ${card.iconBg}`}>
+                <Icon className="w-4 h-4" />
               </div>
             </div>
 
             <div>
-              <p className="text-2xl font-bold font-mono text-slate-950 tracking-tight">
+              <p className={`text-2xl font-bold font-mono tracking-tight ${card.numColor}`}>
                 {card.val}
               </p>
-              <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                {card.sub}
-              </p>
+              <div className="flex items-center justify-between mt-1">
+                <span className="text-[11px] text-slate-500 font-medium">
+                  {card.sub}
+                </span>
+                <span className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full border ${card.tagColor}`}>
+                  {card.tag}
+                </span>
+              </div>
             </div>
           </div>
         );

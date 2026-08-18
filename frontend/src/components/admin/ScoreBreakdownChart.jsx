@@ -21,10 +21,10 @@ export default function ScoreBreakdownChart({ transaction }) {
     <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
       <div className="flex items-center justify-between text-xs">
         <span className="font-bold text-slate-800 flex items-center space-x-1.5">
-          <Layers className="w-3.5 h-3.5 text-slate-600" />
+          <Layers className="w-3.5 h-3.5 text-blue-600" />
           <span>Feature Attribution (TreeSHAP Marginal Contribution)</span>
         </span>
-        <span className="font-mono text-slate-500 text-[11px]">Base Value: 0.02</span>
+        <span className="font-mono text-slate-500 text-[11px]">Base: 0.02</span>
       </div>
 
       <div className="space-y-2 text-xs">
@@ -35,13 +35,13 @@ export default function ScoreBreakdownChart({ transaction }) {
             <div key={idx} className="space-y-1">
               <div className="flex justify-between items-center text-[11px]">
                 <span className="text-slate-700 font-medium">{item.label}</span>
-                <span className={`font-mono font-bold ${isElevated ? 'text-slate-950' : 'text-slate-600'}`}>
+                <span className={`font-mono font-bold ${isElevated ? 'text-rose-700' : 'text-blue-700'}`}>
                   {numVal > 0 ? `+${(numVal * 100).toFixed(1)}%` : `${(numVal * 100).toFixed(1)}%`}
                 </span>
               </div>
               <div className="w-full h-1.5 rounded-full bg-slate-200 overflow-hidden">
                 <div
-                  className={`h-full rounded-full ${isElevated ? 'bg-slate-900' : 'bg-slate-500'}`}
+                  className={`h-full rounded-full ${isElevated ? 'bg-rose-600' : 'bg-blue-600'}`}
                   style={{ width: `${Math.min(100, Math.max(4, Math.abs(numVal) * 100))}%` }}
                 />
               </div>

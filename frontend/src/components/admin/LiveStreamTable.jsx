@@ -52,7 +52,7 @@ export default function LiveStreamTable({ onSelectTransaction }) {
         <div>
           <h3 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
             <span>In-Flight Telemetry Event Stream</span>
-            <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-mono text-[10px] border border-slate-200 font-semibold">
+            <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-mono text-[10px] border border-blue-200 font-semibold">
               {filtered.length} Events
             </span>
           </h3>
@@ -65,7 +65,7 @@ export default function LiveStreamTable({ onSelectTransaction }) {
             onClick={() => setIsPaused(!isPaused)}
             className={`px-2.5 py-1.5 rounded-lg border text-xs font-semibold flex items-center space-x-1.5 transition ${
               isPaused
-                ? 'bg-slate-900 text-white border-slate-900'
+                ? 'bg-amber-600 text-white border-amber-600'
                 : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200'
             }`}
           >
@@ -79,7 +79,7 @@ export default function LiveStreamTable({ onSelectTransaction }) {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search txn / customer / UPI..."
-            className="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-slate-900"
+            className="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-blue-600"
           />
 
           {/* Severity Dropdown */}
@@ -89,11 +89,11 @@ export default function LiveStreamTable({ onSelectTransaction }) {
             className="px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-700 font-medium focus:bg-white focus:outline-none"
           >
             <option value="ALL">All Severities</option>
-            <option value="critical">Critical Anomaly</option>
-            <option value="high">High Variance</option>
-            <option value="medium">Medium Risk</option>
-            <option value="low">Low Risk</option>
-            <option value="normal">Normal (Cleared)</option>
+            <option value="critical">🚨 Critical Anomaly</option>
+            <option value="high">⚠️ High Variance</option>
+            <option value="medium">⚡ Medium Risk</option>
+            <option value="low">🔹 Low Risk</option>
+            <option value="normal">✅ Normal (Cleared)</option>
           </select>
         </div>
       </div>
@@ -102,7 +102,7 @@ export default function LiveStreamTable({ onSelectTransaction }) {
       <div className="overflow-x-auto rounded-lg border border-slate-200">
         <table className="w-full text-left text-xs">
           <thead>
-            <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold text-[11px]">
+            <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-semibold text-[11px]">
               <th className="py-2.5 pl-3">Transaction ID</th>
               <th className="py-2.5">Payer Account</th>
               <th className="py-2.5">Recipient / Merchant</th>
@@ -130,9 +130,9 @@ export default function LiveStreamTable({ onSelectTransaction }) {
                   <tr
                     key={t.transactionId}
                     onClick={() => onSelectTransaction(t)}
-                    className="hover:bg-slate-50 cursor-pointer transition group"
+                    className="hover:bg-slate-50/80 cursor-pointer transition group"
                   >
-                    <td className="py-2.5 pl-3 font-mono font-bold text-slate-900 group-hover:underline">
+                    <td className="py-2.5 pl-3 font-mono font-bold text-slate-900 group-hover:text-blue-600">
                       {t.transactionId}
                     </td>
                     <td className="py-2.5 font-mono text-slate-700">
@@ -142,11 +142,17 @@ export default function LiveStreamTable({ onSelectTransaction }) {
                       <p className="font-semibold text-slate-900 truncate max-w-[160px]">{t.recipientName || t.recipientUpiId}</p>
                       <p className="text-[10px] text-slate-500 font-mono truncate max-w-[160px]">{t.recipientUpiId}</p>
                     </td>
-                    <td className="py-2.5 text-right font-mono font-bold text-slate-950">
+                    <td className="py-2.5 text-right font-mono font-bold text-slate-900">
                       {formatCurrency(t.amount)}
                     </td>
-                    <td className="py-2.5 text-center font-mono font-bold text-slate-900">
-                      {t.totalRiskScore}/100
+                    <td className="py-2.5 text-center font-mono font-extrabold text-slate-900">
+                      <span className={`px-2 py-0.5 rounded-md ${
+                        t.totalRiskScore > 75 ? 'text-rose-700 bg-rose-50' :
+                        t.totalRiskScore > 50 ? 'text-amber-700 bg-amber-50' :
+                        t.totalRiskScore > 30 ? 'text-yellow-800 bg-yellow-50' : 'text-emerald-700 bg-emerald-50'
+                      }`}>
+                        {t.totalRiskScore}/100
+                      </span>
                     </td>
                     <td className="py-2.5">
                       <span className={`text-[10px] font-mono px-2 py-0.5 rounded-md uppercase ${risk.badge}`}>
@@ -159,7 +165,7 @@ export default function LiveStreamTable({ onSelectTransaction }) {
                     <td className="py-2.5 text-[11px] text-slate-600 font-mono">
                       Tier {t.modelTier || 1}
                     </td>
-                    <td className="py-2.5 text-right pr-3 font-mono text-slate-600 font-medium">
+                    <td className="py-2.5 text-right pr-3 font-mono text-emerald-700 font-semibold">
                       {t.latencyMs || 12}ms
                     </td>
                   </tr>

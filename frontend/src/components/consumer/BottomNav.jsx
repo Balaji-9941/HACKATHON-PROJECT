@@ -19,10 +19,10 @@ export default function BottomNav({ activeTab, onTabChange }) {
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
             className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition ${
-              isActive ? 'text-slate-950 font-bold' : 'text-slate-500 hover:text-slate-900'
+              isActive ? 'text-blue-600 font-bold' : 'text-slate-500 hover:text-slate-900'
             }`}
           >
-            <Icon className={`w-5 h-5 ${isActive ? 'scale-105 stroke-[2.5]' : ''} transition-transform`} />
+            <Icon className={`w-5 h-5 ${isActive ? 'scale-110 stroke-[2.5]' : ''} transition-transform`} />
             <span className="text-[10px] mt-1 font-medium">{tab.label}</span>
           </button>
         );

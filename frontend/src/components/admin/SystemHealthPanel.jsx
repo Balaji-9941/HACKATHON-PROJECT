@@ -33,7 +33,7 @@ export default function SystemHealthPanel() {
     <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-card space-y-4 animate-fade-in">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
-          <HeartPulse className="w-5 h-5 text-slate-700" />
+          <HeartPulse className="w-5 h-5 text-rose-600" />
           <h3 className="text-sm font-bold text-slate-900">System Dependencies & Circuit Health</h3>
         </div>
 
@@ -51,13 +51,13 @@ export default function SystemHealthPanel() {
         <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <Database className="w-4 h-4 text-slate-700" />
+              <Database className="w-4 h-4 text-emerald-600" />
               <span className="text-xs font-bold text-slate-800">MongoDB Database</span>
             </div>
-            <span className={`w-2.5 h-2.5 rounded-full ${isMongoHealthy ? 'bg-slate-900' : 'bg-rose-500'}`} />
+            <span className={`w-2.5 h-2.5 rounded-full ${isMongoHealthy ? 'bg-emerald-500' : 'bg-rose-500'}`} />
           </div>
           <p className="text-[11px] text-slate-600 font-mono">
-            State: <strong className="text-slate-900">{isMongoHealthy ? 'CONNECTED' : 'DISCONNECTED'}</strong>
+            State: <strong className={isMongoHealthy ? 'text-emerald-700' : 'text-rose-700'}>{isMongoHealthy ? 'CONNECTED' : 'DISCONNECTED'}</strong>
           </p>
         </div>
 
@@ -65,13 +65,13 @@ export default function SystemHealthPanel() {
         <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <Cpu className="w-4 h-4 text-slate-700" />
+              <Cpu className="w-4 h-4 text-blue-600" />
               <span className="text-xs font-bold text-slate-800">Tier 2 Python ML</span>
             </div>
-            <span className={`w-2.5 h-2.5 rounded-full ${isMLHealthy ? 'bg-slate-900' : 'bg-slate-400'}`} />
+            <span className={`w-2.5 h-2.5 rounded-full ${isMLHealthy ? 'bg-blue-600' : 'bg-amber-500'}`} />
           </div>
           <p className="text-[11px] text-slate-600 font-mono">
-            Circuit: <strong className="text-slate-900">{isMLHealthy ? 'ACTIVE (Online)' : 'OPEN (Tier 1 Fallback)'}</strong>
+            Circuit: <strong className={isMLHealthy ? 'text-blue-700' : 'text-amber-700'}>{isMLHealthy ? 'ACTIVE (Online)' : 'OPEN (Tier 1 Fallback)'}</strong>
           </p>
         </div>
 
@@ -79,10 +79,10 @@ export default function SystemHealthPanel() {
         <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <Sparkles className="w-4 h-4 text-slate-700" />
+              <Sparkles className="w-4 h-4 text-purple-600" />
               <span className="text-xs font-bold text-slate-800">LLM Narrative</span>
             </div>
-            <span className={`w-2.5 h-2.5 rounded-full ${isLLMHealthy ? 'bg-slate-900' : 'bg-slate-400'}`} />
+            <span className={`w-2.5 h-2.5 rounded-full ${isLLMHealthy ? 'bg-purple-600' : 'bg-slate-400'}`} />
           </div>
           <p className="text-[11px] text-slate-600 font-mono">
             Provider: <strong className="text-slate-900">{health?.aiNarrative?.provider || 'Template Fallback'}</strong>
@@ -93,13 +93,13 @@ export default function SystemHealthPanel() {
         <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <Server className="w-4 h-4 text-slate-700" />
+              <Server className="w-4 h-4 text-cyan-600" />
               <span className="text-xs font-bold text-slate-800">Dataset Source</span>
             </div>
-            <span className="w-2.5 h-2.5 rounded-full bg-slate-900" />
+            <span className="w-2.5 h-2.5 rounded-full bg-cyan-600" />
           </div>
           <p className="text-[11px] text-slate-600 font-mono truncate">
-            Mode: <strong className="text-slate-900 font-bold">{dataSource}</strong>
+            Mode: <strong className="text-cyan-800 font-bold">{dataSource}</strong>
           </p>
         </div>
       </div>

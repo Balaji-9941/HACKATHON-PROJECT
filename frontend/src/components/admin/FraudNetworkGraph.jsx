@@ -116,7 +116,7 @@ export default function FraudNetworkGraph({ targetCustomerId = null, onSelectCus
     };
   }, [isOrbiting]);
 
-  // Custom Node Canvas Painting for Professional Institutional Theme
+  // Custom Node Canvas Painting with High-Contrast Professional Fintech Colors
   const paintNode = useCallback(
     (node, ctx, globalScale) => {
       if (
@@ -132,36 +132,45 @@ export default function FraudNetworkGraph({ targetCustomerId = null, onSelectCus
       const x = node.x;
       const y = node.y;
       const rawVal = Number(node.val);
-      const radius = Number.isFinite(rawVal) && rawVal > 0 ? Math.max(3.5, Math.min(7.5, rawVal * 0.35)) : 4.5;
+      const radius = Number.isFinite(rawVal) && rawVal > 0 ? Math.max(3.5, Math.min(8, rawVal * 0.4)) : 4.5;
 
       const isSelected = selectedNode?.id === node.id;
       const isHovered = hoveredNode?.id === node.id;
       const isMule = Boolean(node.isFlagged && (node.pattern?.includes('Mule') || node.maxRiskScore >= 80));
 
       try {
-        // Selection / Hover outer ring
-        if (isSelected || isHovered || isMule) {
+        // Pulse ring for Flagged Mules / Selected
+        if (isMule || isSelected || isHovered) {
+          const pulseRadius = radius + (isMule ? 3.5 : 2.5);
           ctx.beginPath();
-          ctx.arc(x, y, radius + 3, 0, 2 * Math.PI, false);
-          ctx.strokeStyle = isMule ? 'rgba(153, 27, 27, 0.4)' : 'rgba(15, 23, 42, 0.3)';
-          ctx.lineWidth = 1.5;
-          ctx.stroke();
+          ctx.arc(x, y, pulseRadius, 0, 2 * Math.PI, false);
+          ctx.fillStyle = isMule ? 'rgba(239, 68, 68, 0.25)' : 'rgba(37, 99, 235, 0.25)';
+          ctx.fill();
         }
 
-        // Node Core - Crisp Solid Charcoal/Slate or Dark Crimson for Mules
+        // Node Core - Distinct Professional Color Coding
         ctx.beginPath();
         ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
-        ctx.fillStyle = isMule ? '#991b1b' : (node.maxRiskScore >= 60 ? '#475569' : '#0f172a');
+
+        if (node.maxRiskScore >= 80 || isMule) {
+          ctx.fillStyle = '#dc2626'; // Crimson Red
+        } else if (node.maxRiskScore >= 50) {
+          ctx.fillStyle = '#d97706'; // Amber
+        } else if (node.id && String(node.id).startsWith('CUST-')) {
+          ctx.fillStyle = '#2563eb'; // Brand Royal Blue
+        } else {
+          ctx.fillStyle = '#059669'; // Emerald Green for Merchants
+        }
         ctx.fill();
 
-        // White border line
+        // White border ring
         ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = isSelected ? 2 : 1.2;
         ctx.stroke();
       } catch (e) {
         ctx.beginPath();
         ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
-        ctx.fillStyle = '#0f172a';
+        ctx.fillStyle = isMule ? '#dc2626' : '#2563eb';
         ctx.fill();
       }
 
@@ -178,14 +187,13 @@ export default function FraudNetworkGraph({ targetCustomerId = null, onSelectCus
 
             const textWidth = ctx.measureText(label).width;
             if (Number.isFinite(textWidth)) {
-              // Neutral pill backdrop
               ctx.fillStyle = '#ffffff';
               ctx.fillRect(x - textWidth / 2 - 3, y + radius + 2, textWidth + 6, fontSize + 3);
-              ctx.strokeStyle = '#cbd5e1';
+              ctx.strokeStyle = '#e2e8f0';
               ctx.lineWidth = 0.5;
               ctx.strokeRect(x - textWidth / 2 - 3, y + radius + 2, textWidth + 6, fontSize + 3);
 
-              ctx.fillStyle = isMule ? '#991b1b' : '#0f172a';
+              ctx.fillStyle = isMule ? '#b91c1c' : (isSelected ? '#1d4ed8' : '#1e293b');
               ctx.fillText(label, x, y + radius + 3.5);
             }
           }
@@ -197,10 +205,11 @@ export default function FraudNetworkGraph({ targetCustomerId = null, onSelectCus
     [selectedNode, hoveredNode]
   );
 
-  // Subtle link particle colors
+  // Link particle colors
   const getParticleColor = useCallback((link) => {
-    if (link.avgRisk >= 75 || link.severity === 'critical') return '#991b1b';
-    return '#475569';
+    if (link.avgRisk >= 75 || link.severity === 'critical') return '#dc2626'; // Red
+    if (link.avgRisk >= 50 || link.severity === 'high') return '#d97706'; // Amber
+    return '#2563eb'; // Blue
   }, []);
 
   const handleZoomIn = () => graphRef.current?.zoom(graphRef.current.zoom() * 1.3, 400);
@@ -222,39 +231,39 @@ export default function FraudNetworkGraph({ targetCustomerId = null, onSelectCus
         <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-card space-y-1">
           <div className="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase">
             <span>Topology Entities</span>
-            <Network className="w-4 h-4 text-slate-700" />
+            <Network className="w-4 h-4 text-blue-600" />
           </div>
-          <p className="text-xl font-bold text-slate-950 font-mono">
+          <p className="text-xl font-bold text-slate-900 font-mono">
             {graphData.nodes.length} <span className="text-xs font-normal text-slate-500">nodes</span>
           </p>
         </div>
 
         <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-card space-y-1">
           <div className="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase">
-            <span>Flagged Clusters</span>
-            <AlertTriangle className="w-4 h-4 text-slate-700" />
+            <span>Mule Clusters</span>
+            <AlertTriangle className="w-4 h-4 text-rose-600" />
           </div>
-          <p className="text-xl font-bold text-slate-950 font-mono">
+          <p className="text-xl font-bold text-rose-700 font-mono">
             {flaggedNodesCount} <span className="text-xs font-normal text-slate-500">flagged</span>
           </p>
         </div>
 
         <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-card space-y-1">
           <div className="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase">
-            <span>Graph Pathways</span>
-            <Activity className="w-4 h-4 text-slate-700" />
+            <span>Flow Pathways</span>
+            <Activity className="w-4 h-4 text-emerald-600" />
           </div>
-          <p className="text-xl font-bold text-slate-950 font-mono">
+          <p className="text-xl font-bold text-emerald-700 font-mono">
             {graphData.links.length} <span className="text-xs font-normal text-slate-500">edges</span>
           </p>
         </div>
 
         <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-card space-y-1">
           <div className="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase">
-            <span>Observed Volume</span>
-            <DollarSign className="w-4 h-4 text-slate-700" />
+            <span>Flow Volume</span>
+            <DollarSign className="w-4 h-4 text-indigo-600" />
           </div>
-          <p className="text-xl font-bold text-slate-950 font-mono">{formatCurrency(totalVolume)}</p>
+          <p className="text-xl font-bold text-indigo-700 font-mono">{formatCurrency(totalVolume)}</p>
         </div>
       </div>
 
@@ -263,26 +272,26 @@ export default function FraudNetworkGraph({ targetCustomerId = null, onSelectCus
         {/* Force Graph Interactive Window */}
         <div
           ref={containerRef}
-          className="lg:col-span-3 rounded-xl bg-slate-50 border border-slate-200 relative overflow-hidden shadow-card h-[580px]"
+          className="lg:col-span-3 rounded-xl bg-slate-50/80 border border-slate-200 relative overflow-hidden shadow-card h-[580px]"
         >
           {/* Subtle Grid Pattern */}
-          <div className="absolute inset-0 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:24px_24px] opacity-40 pointer-events-none" />
+          <div className="absolute inset-0 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:24px_24px] opacity-60 pointer-events-none" />
 
           {/* Floating Top Control HUD */}
           <div className="absolute top-3 left-3 right-3 flex flex-wrap items-center justify-between gap-2 z-10 pointer-events-none">
             {/* Filter Toggle Pills */}
-            <div className="flex items-center space-x-1 p-1 rounded-lg bg-white border border-slate-200 pointer-events-auto shadow-xs text-xs">
+            <div className="flex items-center space-x-1 p-1 rounded-lg bg-white/95 backdrop-blur-md border border-slate-200 pointer-events-auto shadow-xs text-xs">
               {[
                 { id: 'ALL', label: 'All Entities' },
-                { id: 'FLAGGED', label: 'Flagged Mules' },
-                { id: 'HIGH_VALUE', label: 'High Value (>₹5k)' },
+                { id: 'FLAGGED', label: '🚨 Flagged Mules' },
+                { id: 'HIGH_VALUE', label: '💎 High Value (>₹5k)' },
               ].map((f) => (
                 <button
                   key={f.id}
                   onClick={() => setFilterMode(f.id)}
                   className={`px-2.5 py-1 rounded-md font-medium transition ${
                     filterMode === f.id
-                      ? 'bg-slate-900 text-white font-bold shadow-xs'
+                      ? 'bg-blue-600 text-white font-bold shadow-xs'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                   }`}
                 >
@@ -292,12 +301,12 @@ export default function FraudNetworkGraph({ targetCustomerId = null, onSelectCus
             </div>
 
             {/* Actions HUD */}
-            <div className="flex items-center space-x-1 p-1 rounded-lg bg-white border border-slate-200 pointer-events-auto shadow-xs">
+            <div className="flex items-center space-x-1 p-1 rounded-lg bg-white/95 backdrop-blur-md border border-slate-200 pointer-events-auto shadow-xs">
               <button
                 onClick={() => setIsOrbiting(!isOrbiting)}
                 className={`p-1.5 rounded-md text-xs font-semibold flex items-center space-x-1 transition ${
                   isOrbiting
-                    ? 'bg-slate-900 text-white'
+                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                 }`}
                 title="Auto-Orbit Camera"
@@ -332,7 +341,7 @@ export default function FraudNetworkGraph({ targetCustomerId = null, onSelectCus
 
               <button
                 onClick={loadGraph}
-                className="p-1.5 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition"
+                className="p-1.5 rounded-md text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition"
                 title="Reload Topology"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
@@ -342,9 +351,9 @@ export default function FraudNetworkGraph({ targetCustomerId = null, onSelectCus
 
           {/* Force Graph Renderer */}
           {loading ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center space-y-2 text-xs text-slate-600 font-medium">
-              <div className="w-6 h-6 rounded-full border-2 border-slate-900 border-t-transparent animate-spin" />
-              <p>Simulating entity topology...</p>
+            <div className="absolute inset-0 flex flex-col items-center justify-center space-y-2 text-xs text-blue-600 font-medium">
+              <div className="w-8 h-8 rounded-full border-2 border-blue-600 border-t-transparent animate-spin" />
+              <p>Simulating entity network physics...</p>
             </div>
           ) : graphData.nodes.length === 0 ? (
             <div className="absolute inset-0 flex items-center justify-center text-xs text-slate-500 font-medium">
@@ -361,15 +370,19 @@ export default function FraudNetworkGraph({ targetCustomerId = null, onSelectCus
               nodeCanvasObjectMode={() => 'replace'}
               nodeRelSize={3.5}
               linkCurvature={0.2}
-              linkWidth={(l) => Math.max(0.8, Math.min(2.2, Math.log10(l.value || 100) * 0.6))}
+              linkWidth={(l) => Math.max(0.8, Math.min(2.5, Math.log10(l.value || 100) * 0.7))}
               linkColor={(l) =>
-                l.avgRisk >= 75 ? 'rgba(153, 27, 27, 0.4)' : 'rgba(148, 163, 184, 0.4)'
+                l.avgRisk >= 75
+                  ? 'rgba(220, 38, 38, 0.4)'
+                  : l.avgRisk >= 50
+                  ? 'rgba(217, 119, 6, 0.35)'
+                  : 'rgba(37, 99, 235, 0.25)'
               }
-              linkDirectionalParticles={2}
+              linkDirectionalParticles={3}
               linkDirectionalParticleSpeed={(l) =>
-                Math.max(0.005, Math.min(0.015, particleSpeed * (l.value > 10000 ? 1.3 : 1)))
+                Math.max(0.006, Math.min(0.018, particleSpeed * (l.value > 10000 ? 1.4 : 1)))
               }
-              linkDirectionalParticleWidth={(l) => Math.max(1.5, Math.min(3, (l.value / 15000) * 2.2))}
+              linkDirectionalParticleWidth={(l) => Math.max(1.8, Math.min(3.6, (l.value / 15000) * 2.8))}
               linkDirectionalParticleColor={getParticleColor}
               onNodeClick={(node) => {
                 setSelectedNode(node);
@@ -386,16 +399,24 @@ export default function FraudNetworkGraph({ targetCustomerId = null, onSelectCus
           )}
 
           {/* Bottom Legend */}
-          <div className="absolute bottom-3 left-3 p-3 rounded-lg bg-white border border-slate-200 text-[11px] space-y-1.5 shadow-xs z-10 font-medium">
-            <p className="font-bold text-slate-900">Entity Topology Map:</p>
+          <div className="absolute bottom-3 left-3 p-3 rounded-lg bg-white/95 backdrop-blur-md border border-slate-200 text-[11px] space-y-1.5 shadow-xs z-10 font-medium">
+            <p className="font-bold text-slate-800">Entity Topology Map:</p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-slate-600">
               <div className="flex items-center space-x-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-slate-900" />
-                <span>Standard Account</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-600" />
+                <span>👤 Customer Account</span>
               </div>
               <div className="flex items-center space-x-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-rose-800" />
-                <span>Flagged Mule Hub</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" />
+                <span>🏬 Verified Merchant</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                <span>⚡ Elevated Velocity</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-red-600" />
+                <span>🚨 Flagged Mule Hub</span>
               </div>
             </div>
           </div>
@@ -420,13 +441,19 @@ export default function FraudNetworkGraph({ targetCustomerId = null, onSelectCus
               {/* Header Box */}
               <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 border border-slate-200">
+                  <span
+                    className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md ${
+                      selectedNode.isFlagged
+                        ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                        : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                    }`}
+                  >
                     {selectedNode.pattern || 'Normal Node'}
                   </span>
                   <span className="font-mono text-slate-500 text-[11px] font-semibold">{selectedNode.id}</span>
                 </div>
 
-                <h3 className="text-sm font-extrabold text-slate-950">{selectedNode.name}</h3>
+                <h3 className="text-sm font-extrabold text-slate-900">{selectedNode.name}</h3>
                 <p className="text-slate-500 font-mono text-[11px]">{selectedNode.upiId}</p>
               </div>
 
@@ -434,38 +461,59 @@ export default function FraudNetworkGraph({ targetCustomerId = null, onSelectCus
               <div className="grid grid-cols-2 gap-2">
                 <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-0.5">
                   <span className="text-[10px] text-slate-500 uppercase font-semibold">Peak Risk</span>
-                  <p className="text-lg font-bold font-mono text-slate-950">
+                  <p
+                    className={`text-lg font-bold font-mono ${
+                      selectedNode.maxRiskScore > 75
+                        ? 'text-rose-700'
+                        : selectedNode.maxRiskScore > 40
+                        ? 'text-amber-700'
+                        : 'text-emerald-700'
+                    }`}
+                  >
                     {selectedNode.maxRiskScore}/100
                   </p>
                 </div>
 
                 <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-0.5">
                   <span className="text-[10px] text-slate-500 uppercase font-semibold">Flow Volume</span>
-                  <p className="text-sm font-bold text-slate-950 font-mono mt-0.5">
+                  <p className="text-sm font-bold text-slate-900 font-mono mt-0.5">
                     {formatCurrency(selectedNode.volume)}
                   </p>
                 </div>
 
                 <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-0.5">
                   <span className="text-[10px] text-slate-500 uppercase font-semibold">In-Degree</span>
-                  <p className="text-sm font-bold text-slate-900 font-mono">
+                  <p className="text-sm font-bold text-blue-700 font-mono">
                     {selectedNode.inDegree || 0} incoming
                   </p>
                 </div>
 
                 <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-0.5">
                   <span className="text-[10px] text-slate-500 uppercase font-semibold">Out-Degree</span>
-                  <p className="text-sm font-bold text-slate-900 font-mono">
+                  <p className="text-sm font-bold text-indigo-700 font-mono">
                     {selectedNode.outDegree || 0} outgoing
                   </p>
                 </div>
               </div>
 
+              {/* Mule Alert Callout */}
+              {selectedNode.isFlagged && (
+                <div className="p-3.5 rounded-lg bg-red-50 border border-red-200 text-[11px] text-red-800 leading-relaxed space-y-1">
+                  <p className="font-bold flex items-center space-x-1.5 text-red-900">
+                    <AlertTriangle className="w-3.5 h-3.5 text-red-600" />
+                    <span>Mule Ring Aggregation Detected</span>
+                  </p>
+                  <p>
+                    This account demonstrates disproportionate funneling behavior. Multiple distinct source entities are transmitting funds into this single aggregator node.
+                  </p>
+                </div>
+              )}
+
               {/* Action Buttons */}
               {selectedNode.id?.startsWith('CUST-') && (
                 <button
                   onClick={() => onSelectCustomer && onSelectCustomer(selectedNode.id)}
-                  className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs flex items-center justify-center space-x-1.5 transition shadow-xs"
+                  className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs flex items-center justify-center space-x-1.5 transition shadow-xs"
                 >
                   <span>Filter Graph to this Customer</span>
                   <ArrowRight className="w-3.5 h-3.5" />

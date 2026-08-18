@@ -83,12 +83,12 @@ export default function ModelPerformance() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
-            <Cpu className="w-4 h-4 text-slate-700" />
+            <Cpu className="w-4 h-4 text-blue-600" />
             <span>Model Validation & Metrics Benchmark</span>
           </h3>
           <p className="text-xs text-slate-500 font-medium">Ground-truth evaluation across held-out real transaction splits</p>
         </div>
-        <span className="text-xs font-mono px-3 py-1 rounded-lg bg-slate-100 text-slate-800 border border-slate-200 font-bold">
+        <span className="text-xs font-mono px-3 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 font-bold">
           {metrics?.modelVersion || 'xgboost-v1'}
         </span>
       </div>
@@ -96,14 +96,14 @@ export default function ModelPerformance() {
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
         {[
-          { label: 'Precision', val: `${Math.round((metrics?.precision || 0.94) * 100)}%`, sub: 'Low false alarm rate' },
-          { label: 'Recall (Sensitivity)', val: `${Math.round((metrics?.recall || 0.91) * 100)}%`, sub: 'High fraud capture rate' },
-          { label: 'F1 Harmonic Score', val: `${Math.round((metrics?.f1Score || 0.925) * 100)}%`, sub: 'Balanced trade-off index' },
-          { label: 'ROC-AUC', val: `${(metrics?.rocAuc || 0.958).toFixed(3)}`, sub: 'Discriminative power' },
+          { label: 'Precision', val: `${Math.round((metrics?.precision || 0.94) * 100)}%`, sub: 'Low false alarm rate', color: 'text-emerald-700' },
+          { label: 'Recall (Sensitivity)', val: `${Math.round((metrics?.recall || 0.91) * 100)}%`, sub: 'High fraud capture rate', color: 'text-blue-700' },
+          { label: 'F1 Harmonic Score', val: `${Math.round((metrics?.f1Score || 0.925) * 100)}%`, sub: 'Balanced trade-off index', color: 'text-indigo-700' },
+          { label: 'ROC-AUC', val: `${(metrics?.rocAuc || 0.958).toFixed(3)}`, sub: 'Discriminative power', color: 'text-purple-700' },
         ].map((kpi, idx) => (
           <div key={idx} className="p-4 rounded-xl bg-white border border-slate-200 shadow-card space-y-1">
             <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{kpi.label}</span>
-            <p className="text-2xl font-bold font-mono text-slate-950">{kpi.val}</p>
+            <p className={`text-2xl font-bold font-mono ${kpi.color}`}>{kpi.val}</p>
             <span className="text-[10px] text-slate-500 block font-medium">{kpi.sub}</span>
           </div>
         ))}
@@ -115,28 +115,28 @@ export default function ModelPerformance() {
         <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-card space-y-4">
           <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Confusion Matrix ({totalCases} Test Instances)</h4>
           <div className="grid grid-cols-2 gap-3 text-center">
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-              <span className="text-xs text-slate-700 font-bold block">True Negatives (TN)</span>
-              <span className="text-3xl font-extrabold text-slate-950 font-mono">{cm.tn}</span>
-              <span className="text-[10px] text-slate-500 block font-medium">Legitimate correctly cleared</span>
+            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 space-y-1">
+              <span className="text-xs text-emerald-800 font-bold block">True Negatives (TN)</span>
+              <span className="text-3xl font-extrabold text-slate-900 font-mono">{cm.tn}</span>
+              <span className="text-[10px] text-emerald-700 block font-medium">Legitimate correctly cleared</span>
             </div>
 
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-              <span className="text-xs text-slate-700 font-bold block">False Positives (FP)</span>
-              <span className="text-3xl font-extrabold text-slate-950 font-mono">{cm.fp}</span>
-              <span className="text-[10px] text-slate-500 block font-medium">Benign flagged as fraud</span>
+            <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 space-y-1">
+              <span className="text-xs text-amber-900 font-bold block">False Positives (FP)</span>
+              <span className="text-3xl font-extrabold text-slate-900 font-mono">{cm.fp}</span>
+              <span className="text-[10px] text-amber-800 block font-medium">Benign flagged as fraud</span>
             </div>
 
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-              <span className="text-xs text-slate-700 font-bold block">False Negatives (FN)</span>
-              <span className="text-3xl font-extrabold text-slate-950 font-mono">{cm.fn}</span>
-              <span className="text-[10px] text-slate-500 block font-medium">Missed fraud payments</span>
+            <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 space-y-1">
+              <span className="text-xs text-rose-900 font-bold block">False Negatives (FN)</span>
+              <span className="text-3xl font-extrabold text-slate-900 font-mono">{cm.fn}</span>
+              <span className="text-[10px] text-rose-700 block font-medium">Missed fraud payments</span>
             </div>
 
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-              <span className="text-xs text-slate-700 font-bold block">True Positives (TP)</span>
-              <span className="text-3xl font-extrabold text-slate-950 font-mono">{cm.tp}</span>
-              <span className="text-[10px] text-slate-500 block font-medium">Fraud correctly caught</span>
+            <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 space-y-1">
+              <span className="text-xs text-blue-900 font-bold block">True Positives (TP)</span>
+              <span className="text-3xl font-extrabold text-slate-900 font-mono">{cm.tp}</span>
+              <span className="text-[10px] text-blue-700 block font-medium">Fraud correctly caught</span>
             </div>
           </div>
         </div>
@@ -145,25 +145,25 @@ export default function ModelPerformance() {
         <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-card space-y-4">
           <div className="flex items-center justify-between">
             <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Receiver Operating Characteristic (ROC)</h4>
-            <span className="text-[11px] font-mono text-slate-900 font-bold">AUC = {(metrics?.rocAuc || 0.958).toFixed(3)}</span>
+            <span className="text-[11px] font-mono text-blue-700 font-bold">AUC = {(metrics?.rocAuc || 0.958).toFixed(3)}</span>
           </div>
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={rocPoints} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="rocGradientMonochrome" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#0f172a" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#0f172a" stopOpacity={0.0} />
+                  <linearGradient id="rocGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#2563eb" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#2563eb" stopOpacity={0.0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                 <XAxis dataKey="fpr" stroke="#94a3b8" tickFormatter={(v) => `${(v * 100).toFixed(0)}% FPR`} fontSize={11} />
                 <YAxis dataKey="tpr" stroke="#94a3b8" tickFormatter={(v) => `${(v * 100).toFixed(0)}% TPR`} fontSize={11} />
                 <Tooltip
-                  contentStyle={{ backgroundColor: '#ffffff', borderColor: '#cbd5e1', borderRadius: '8px', fontSize: '11px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}
+                  contentStyle={{ backgroundColor: '#ffffff', borderColor: '#cbd5e1', borderRadius: '8px', fontSize: '11px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
                   formatter={(val, name) => [`${(val * 100).toFixed(1)}%`, name.toUpperCase()]}
                 />
-                <Area type="monotone" dataKey="tpr" stroke="#0f172a" strokeWidth={2} fill="url(#rocGradientMonochrome)" />
+                <Area type="monotone" dataKey="tpr" stroke="#2563eb" strokeWidth={2} fill="url(#rocGradient)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -180,10 +180,10 @@ export default function ModelPerformance() {
               <XAxis dataKey="name" stroke="#64748b" fontSize={11} />
               <YAxis stroke="#64748b" fontSize={11} tickFormatter={(v) => `${v}%`} />
               <Tooltip
-                contentStyle={{ backgroundColor: '#ffffff', borderColor: '#cbd5e1', borderRadius: '8px', fontSize: '11px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}
+                contentStyle={{ backgroundColor: '#ffffff', borderColor: '#cbd5e1', borderRadius: '8px', fontSize: '11px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
                 formatter={(val) => [`${val}%`, 'Importance Weight']}
               />
-              <Bar dataKey="importance" fill="#0f172a" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="importance" fill="#2563eb" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

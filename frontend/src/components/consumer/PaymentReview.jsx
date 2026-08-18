@@ -37,7 +37,7 @@ export default function PaymentReview({
       </div>
 
       {/* Recipient & Amount Card */}
-      <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-card space-y-3">
+      <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-card space-y-3">
         <div className="flex items-center space-x-3">
           <div className="w-11 h-11 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-sm font-bold text-slate-800">
             {recipient?.avatar && recipient.avatar.startsWith('http') ? (
@@ -54,7 +54,7 @@ export default function PaymentReview({
 
         <div className="pt-3 border-t border-slate-100 flex justify-between items-baseline">
           <span className="text-xs text-slate-500 font-medium">Total Transfer Amount</span>
-          <span className="text-2xl font-black text-slate-950 font-mono">{formatCurrency(amount)}</span>
+          <span className="text-2xl font-black text-slate-900 font-mono">{formatCurrency(amount)}</span>
         </div>
       </div>
 
@@ -99,8 +99,8 @@ export default function PaymentReview({
           type="text"
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder="Add a reference note (optional)"
-          className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 shadow-xs"
+          placeholder="Add a note (e.g. Split dinner)"
+          className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-xs"
         />
       </div>
 
@@ -109,13 +109,17 @@ export default function PaymentReview({
         <button
           onClick={handlePayClick}
           disabled={isProcessing}
-          className="w-full py-3 rounded-xl font-bold text-sm shadow-card transition active:scale-98 flex items-center justify-center space-x-2 bg-slate-900 hover:bg-slate-800 text-white"
+          className={`w-full py-3 rounded-xl font-bold text-sm shadow-md transition active:scale-[0.98] flex items-center justify-center space-x-2 ${
+            assessment?.alertSeverity === 'critical' || assessment?.alertSeverity === 'high'
+              ? 'bg-rose-600 hover:bg-rose-700 text-white'
+              : 'bg-blue-600 hover:bg-blue-700 text-white'
+          }`}
         >
           {isProcessing ? (
             <span>Settling payment...</span>
           ) : (
             <>
-              <span>Authorize & Pay {formatCurrency(amount)}</span>
+              <span>Confirm & Pay {formatCurrency(amount)}</span>
               <ArrowRight className="w-4 h-4" />
             </>
           )}

@@ -70,7 +70,7 @@ export default function PassbookScreen({ onBack }) {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search transactions..."
-          className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 shadow-xs"
+          className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-xs"
         />
       </div>
 
@@ -81,10 +81,10 @@ export default function PassbookScreen({ onBack }) {
             key={tab}
             onClick={() => setFilterTab(tab)}
             className={`flex-1 py-1.5 rounded-lg font-medium transition ${
-              filterTab === tab ? 'bg-white text-slate-950 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
+              filterTab === tab ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            {tab === 'RISKY' ? 'Elevated Anomaly' : 'All Transactions'}
+            {tab === 'RISKY' ? '⚠️ Elevated Anomaly' : 'All Transactions'}
           </button>
         ))}
       </div>
@@ -102,14 +102,14 @@ export default function PassbookScreen({ onBack }) {
               <button
                 key={txn.transactionId}
                 onClick={() => setSelectedTxn(txn)}
-                className="w-full p-3.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 shadow-card flex items-center justify-between transition group text-left"
+                className="w-full p-3.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/80 shadow-xs hover:shadow-card flex items-center justify-between transition group text-left"
               >
                 <div className="flex items-center space-x-3 min-w-0">
-                  <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700 border border-slate-200">
-                    <ArrowUpRight className="w-4 h-4" />
+                  <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600">
+                    <ArrowUpRight className="w-5 h-5 text-rose-600" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-slate-900 truncate group-hover:underline">
+                    <p className="text-xs font-bold text-slate-900 truncate group-hover:text-blue-700 transition">
                       {txn.recipientName || txn.recipientUpiId}
                     </p>
                     <p className="text-[11px] text-slate-500 font-medium">
@@ -125,10 +125,20 @@ export default function PassbookScreen({ onBack }) {
 
                 <div className="flex items-center space-x-2 shrink-0">
                   <div className="text-right">
-                    <p className="text-xs font-extrabold text-slate-950 font-mono">-{formatCurrency(txn.amount)}</p>
+                    <p className="text-xs font-extrabold text-slate-900 font-mono">-{formatCurrency(txn.amount)}</p>
                     <div className="flex items-center justify-end space-x-1 mt-0.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-slate-900" />
-                      <span className="text-[10px] font-mono text-slate-500 font-medium">{txn.totalRiskScore}</span>
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full ${
+                          txn.totalRiskScore <= 30
+                            ? 'bg-emerald-600'
+                            : txn.totalRiskScore <= 50
+                            ? 'bg-yellow-500'
+                            : txn.totalRiskScore <= 70
+                            ? 'bg-amber-500'
+                            : 'bg-rose-600'
+                        }`}
+                      />
+                      <span className="text-[10px] font-mono text-slate-500 font-semibold">{txn.totalRiskScore}</span>
                     </div>
                   </div>
                   <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-700 transition" />

@@ -30,7 +30,7 @@ export default function TelemetryDrawer({ transaction, onClose, onInspectNetwork
               {transaction.alertSeverity}
             </span>
           </div>
-          <h3 className="text-base font-bold text-slate-950 mt-1">
+          <h3 className="text-base font-bold text-slate-900 mt-1">
             Telemetry Inspector & SHAP Explainability
           </h3>
         </div>
@@ -48,29 +48,29 @@ export default function TelemetryDrawer({ transaction, onClose, onInspectNetwork
         <div className="grid grid-cols-2 gap-3">
           <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
             <span className="text-[10px] text-slate-500 font-semibold uppercase">Amount (INR)</span>
-            <p className="text-xl font-bold font-mono text-slate-950">{formatCurrency(transaction.amount)}</p>
+            <p className="text-xl font-bold font-mono text-slate-900">{formatCurrency(transaction.amount)}</p>
           </div>
 
           <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
             <span className="text-[10px] text-slate-500 font-semibold uppercase">Risk Score</span>
-            <p className="text-xl font-bold font-mono text-slate-950">{transaction.totalRiskScore}/100</p>
+            <p className="text-xl font-bold font-mono text-rose-700">{transaction.totalRiskScore}/100</p>
           </div>
         </div>
 
         {/* Hypothesis / Explanation Box */}
-        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+        <div className={`p-4 rounded-xl border space-y-1.5 ${risk.bg} ${risk.border}`}>
           <span className="text-xs font-bold text-slate-900 flex items-center space-x-1.5">
-            <ShieldAlert className="w-4 h-4 text-slate-700" />
-            <span>Deterministic Explanation:</span>
+            <ShieldAlert className="w-4 h-4 text-rose-600" />
+            <span>Deterministic Rule Hypothesis:</span>
           </span>
-          <p className="text-xs text-slate-700 leading-relaxed font-medium">
+          <p className="text-xs text-slate-800 leading-relaxed font-medium">
             {transaction.fraudExplanation || 'Standard telemetry profile within baseline boundaries.'}
           </p>
 
           {/* AI Narrative if available */}
           {transaction.aiNarrative && (
             <div className="mt-3 p-3 rounded-lg bg-white border border-slate-200 text-xs text-slate-800 leading-relaxed shadow-xs">
-              <span className="font-bold text-slate-900 block mb-1">AI Narrative Synthesis:</span>
+              <span className="font-bold text-blue-700 block mb-1">AI Narrative Synthesis:</span>
               <p className="italic font-medium">{transaction.aiNarrative}</p>
             </div>
           )}
@@ -82,20 +82,24 @@ export default function TelemetryDrawer({ transaction, onClose, onInspectNetwork
             Multivariate Signal Telemetry (Tier 1 Engine)
           </h4>
           <div className="space-y-2">
-            {signals.map((sig, idx) => (
-              <div key={idx} className="space-y-1">
-                <div className="flex justify-between text-xs">
-                  <span className="text-slate-600 font-medium">{sig.label}</span>
-                  <span className="font-mono text-slate-900 font-semibold">{sig.score}/{sig.max} pts</span>
+            {signals.map((sig, idx) => {
+              const ratio = sig.score / sig.max;
+              const barColor = ratio > 0.6 ? 'bg-rose-600' : ratio > 0.3 ? 'bg-amber-500' : 'bg-emerald-500';
+              return (
+                <div key={idx} className="space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-slate-600 font-medium">{sig.label}</span>
+                    <span className="font-mono text-slate-900 font-semibold">{sig.score}/{sig.max} pts</span>
+                  </div>
+                  <div className="w-full h-1.5 rounded-full bg-slate-100 border border-slate-200 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${barColor}`}
+                      style={{ width: `${ratio * 100}%` }}
+                    />
+                  </div>
                 </div>
-                <div className="w-full h-1.5 rounded-full bg-slate-100 border border-slate-200 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-slate-900"
-                    style={{ width: `${(sig.score / sig.max) * 100}%` }}
-                  />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -128,7 +132,7 @@ export default function TelemetryDrawer({ transaction, onClose, onInspectNetwork
           </div>
           <div className="flex justify-between">
             <span className="text-slate-500">Execution Tier:</span>
-            <span className="font-mono text-slate-900 font-bold">Tier {transaction.modelTier} ({transaction.modelVersion})</span>
+            <span className="font-mono text-blue-700 font-bold">Tier {transaction.modelTier} ({transaction.modelVersion})</span>
           </div>
         </div>
       </div>
@@ -141,15 +145,15 @@ export default function TelemetryDrawer({ transaction, onClose, onInspectNetwork
               onInspectNetwork(transaction.customerId);
             }
           }}
-          className="px-3.5 py-2 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 font-semibold text-xs flex items-center space-x-1.5 transition shadow-xs"
+          className="px-3.5 py-2 rounded-lg bg-white hover:bg-blue-50 border border-slate-200 hover:border-blue-200 text-blue-700 font-semibold text-xs flex items-center space-x-1.5 transition shadow-xs"
         >
-          <ExternalLink className="w-3.5 h-3.5 text-slate-600" />
+          <ExternalLink className="w-3.5 h-3.5" />
           <span>Inspect Customer Network</span>
         </button>
 
         <button
           onClick={onClose}
-          className="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs transition shadow-xs"
+          className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition shadow-xs"
         >
           Close Inspector
         </button>

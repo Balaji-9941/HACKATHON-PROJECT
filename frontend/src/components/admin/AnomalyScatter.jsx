@@ -34,13 +34,15 @@ export default function AnomalyScatter({ onSelectTransaction }) {
   const getColor = (sev) => {
     switch (sev) {
       case 'critical':
-        return '#991b1b';
+        return '#dc2626'; // Vivid Red
       case 'high':
-        return '#475569';
+        return '#ea580c'; // Orange
       case 'medium':
-        return '#64748b';
+        return '#d97706'; // Amber
+      case 'low':
+        return '#2563eb'; // Blue
       default:
-        return '#0f172a';
+        return '#16a34a'; // Emerald Green
     }
   };
 
@@ -54,7 +56,7 @@ export default function AnomalyScatter({ onSelectTransaction }) {
             Amount: <strong className="text-slate-900 font-mono">{formatCurrency(p.amount)}</strong>
           </p>
           <p className="text-slate-600">
-            Risk Score: <strong className="font-mono text-slate-900 font-bold">{p.riskScore}/100</strong>
+            Risk Score: <strong className="font-mono text-blue-700 font-bold">{p.riskScore}/100</strong>
           </p>
           <p className="text-slate-500 text-[11px]">Paid to: {p.recipient}</p>
         </div>
@@ -68,22 +70,22 @@ export default function AnomalyScatter({ onSelectTransaction }) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
           <h3 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
-            <ScatterIcon className="w-4 h-4 text-slate-700" />
+            <ScatterIcon className="w-4 h-4 text-blue-600" />
             <span>Multivariate Risk vs Amount Scatter Space</span>
           </h3>
           <p className="text-xs text-slate-500 font-medium">Transaction Value (INR) vs Real-Time Anomaly Score (0-100)</p>
         </div>
         <div className="flex items-center space-x-3 text-[11px] font-medium text-slate-600">
           <span className="flex items-center space-x-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-slate-900" />
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" />
             <span>Normal (0-30)</span>
           </span>
           <span className="flex items-center space-x-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-slate-500" />
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
             <span>Medium (31-70)</span>
           </span>
           <span className="flex items-center space-x-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-rose-800" />
+            <span className="w-2.5 h-2.5 rounded-full bg-red-600" />
             <span>High/Critical (&gt;70)</span>
           </span>
         </div>
@@ -111,7 +113,7 @@ export default function AnomalyScatter({ onSelectTransaction }) {
               stroke="#94a3b8"
               fontSize={11}
             />
-            <ZAxis range={[40, 120]} />
+            <ZAxis range={[50, 140]} />
             <Tooltip content={<CustomTooltip />} />
             <Scatter
               data={data}

@@ -33,8 +33,8 @@ export default function AmountInput({ recipient, amount, setAmount, onProceed, o
       {/* Main Amount Display */}
       <div className="text-center py-4 space-y-1">
         <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Amount (INR)</span>
-        <div className="text-4xl sm:text-5xl font-extrabold text-slate-950 tracking-tight flex items-center justify-center font-mono">
-          <span className="text-slate-400 text-3xl mr-1">₹</span>
+        <div className="text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight flex items-center justify-center font-mono">
+          <span className="text-blue-600 text-3xl mr-1">₹</span>
           <span>{amount || '0'}</span>
         </div>
         <p className="text-xs text-slate-500 font-mono mt-1 font-medium">
@@ -44,15 +44,25 @@ export default function AmountInput({ recipient, amount, setAmount, onProceed, o
 
       {/* Real-time Pre-Check Gauge */}
       {preCheckAssessment && numAmount > 0 && (
-        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 shadow-xs flex items-center justify-between text-xs transition">
+        <div className="p-3 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-between text-xs transition">
           <div className="flex items-center space-x-2">
-            <span className="w-2 h-2 rounded-full bg-slate-900" />
+            <span
+              className={`w-2.5 h-2.5 rounded-full ${
+                preCheckAssessment.totalRiskScore <= 30
+                  ? 'bg-emerald-500'
+                  : preCheckAssessment.totalRiskScore <= 50
+                  ? 'bg-yellow-500'
+                  : preCheckAssessment.totalRiskScore <= 70
+                  ? 'bg-amber-500'
+                  : 'bg-rose-600'
+              }`}
+            />
             <span className="text-slate-700 font-medium">
-              Risk: <strong className="text-slate-950 font-mono">{preCheckAssessment.totalRiskScore}/100</strong>
+              Risk: <strong className="text-slate-900 font-mono">{preCheckAssessment.totalRiskScore}/100</strong>
             </span>
           </div>
-          <span className="text-[11px] font-mono text-slate-600 font-semibold flex items-center space-x-1">
-            <Shield className="w-3 h-3 text-slate-500" />
+          <span className="text-[11px] font-mono text-blue-700 font-semibold flex items-center space-x-1">
+            <Shield className="w-3.5 h-3.5 text-blue-600" />
             <span>Tier 1 Pre-Check ({preCheckAssessment.latencyMs || 2}ms)</span>
           </span>
         </div>
@@ -77,7 +87,7 @@ export default function AmountInput({ recipient, amount, setAmount, onProceed, o
           <button
             key={digit}
             onClick={() => handleKey(digit)}
-            className="h-12 rounded-xl bg-white hover:bg-slate-50 text-slate-900 font-bold text-lg border border-slate-200 shadow-card transition active:scale-98 font-mono"
+            className="h-12 rounded-xl bg-white hover:bg-slate-50 text-slate-900 font-bold text-lg border border-slate-200/80 shadow-xs transition active:scale-95 font-mono"
           >
             {digit}
           </button>
@@ -90,7 +100,7 @@ export default function AmountInput({ recipient, amount, setAmount, onProceed, o
         </button>
         <button
           onClick={() => handleKey('0')}
-          className="h-12 rounded-xl bg-white hover:bg-slate-50 text-slate-900 font-bold text-lg border border-slate-200 shadow-card transition active:scale-98 font-mono"
+          className="h-12 rounded-xl bg-white hover:bg-slate-50 text-slate-900 font-bold text-lg border border-slate-200/80 shadow-xs transition active:scale-95 font-mono"
         >
           0
         </button>
@@ -106,7 +116,7 @@ export default function AmountInput({ recipient, amount, setAmount, onProceed, o
         <button
           onClick={onProceed}
           disabled={!amount || Number(amount) <= 0 || isEvaluating}
-          className="w-full py-3 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-bold text-sm shadow-card transition active:scale-98 flex items-center justify-center space-x-2"
+          className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-sm shadow-md transition active:scale-[0.98] flex items-center justify-center space-x-2"
         >
           {isEvaluating ? (
             <span>Evaluating telemetry...</span>

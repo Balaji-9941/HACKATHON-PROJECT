@@ -36,12 +36,12 @@ export default function AdminSidebar({ activeTab, onTabChange, onSwitchToConsume
       <div>
         <div className="h-16 px-5 border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-white shadow-xs">
+            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-xs">
               <Shield className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h1 className="text-sm font-bold text-slate-950 tracking-tight leading-none">PayTelemetry</h1>
-              <p className="text-[10px] text-slate-600 font-mono mt-1 font-semibold uppercase tracking-wider">Enterprise SOC</p>
+              <h1 className="text-sm font-bold text-slate-900 tracking-tight leading-none">PayTelemetry</h1>
+              <p className="text-[10px] text-blue-700 font-mono mt-1 font-semibold uppercase tracking-wider">Enterprise SOC</p>
             </div>
           </div>
         </div>
@@ -57,11 +57,11 @@ export default function AdminSidebar({ activeTab, onTabChange, onSwitchToConsume
                 onClick={() => onTabChange(item.id)}
                 className={`w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-lg text-xs font-semibold transition ${
                   isActive
-                    ? 'bg-slate-900 text-white shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    ? 'bg-blue-50 text-blue-700 font-bold border border-blue-100 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-500'}`} />
+                <Icon className={`w-4 h-4 ${isActive ? 'text-blue-600' : 'text-slate-400'}`} />
                 <span className="truncate">{item.label}</span>
               </button>
             );
@@ -74,9 +74,9 @@ export default function AdminSidebar({ activeTab, onTabChange, onSwitchToConsume
         {/* Switch to Consumer App */}
         <button
           onClick={onSwitchToConsumer}
-          className="w-full flex items-center justify-center space-x-2 py-2 px-3 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 hover:text-slate-900 text-xs font-semibold transition"
+          className="w-full flex items-center justify-center space-x-2 py-2 px-3 rounded-lg bg-slate-50 hover:bg-blue-50 hover:text-blue-700 border border-slate-200 text-slate-700 text-xs font-semibold transition"
         >
-          <Smartphone className="w-3.5 h-3.5 text-slate-500" />
+          <Smartphone className="w-3.5 h-3.5" />
           <span>Consumer UPI Demo</span>
         </button>
 
@@ -88,7 +88,7 @@ export default function AdminSidebar({ activeTab, onTabChange, onSwitchToConsume
           </div>
           <button
             onClick={logout}
-            className="p-1.5 rounded-md hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition"
+            className="p-1.5 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition"
             title="Log Out"
           >
             <LogOut className="w-3.5 h-3.5" />

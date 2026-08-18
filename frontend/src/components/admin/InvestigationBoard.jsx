@@ -11,9 +11,9 @@ export default function InvestigationBoard({ onSelectAlert }) {
   const [loading, setLoading] = useState(true);
 
   const columns = [
-    { id: 'Open', label: 'Open Triage', badgeColor: 'bg-slate-100 text-slate-900 border-slate-300' },
-    { id: 'Investigating', label: 'Under Investigation', badgeColor: 'bg-slate-100 text-slate-800 border-slate-300' },
-    { id: 'Resolved', label: 'Resolved (Confirmed Fraud)', badgeColor: 'bg-slate-100 text-slate-800 border-slate-300' },
+    { id: 'Open', label: 'Open Triage', badgeColor: 'bg-rose-100 text-rose-800 border-rose-200' },
+    { id: 'Investigating', label: 'Under Investigation', badgeColor: 'bg-amber-100 text-amber-800 border-amber-200' },
+    { id: 'Resolved', label: 'Resolved (Confirmed Fraud)', badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
     { id: 'False Positive', label: 'False Positive (Benign)', badgeColor: 'bg-slate-100 text-slate-700 border-slate-200' },
   ];
 
@@ -67,7 +67,7 @@ export default function InvestigationBoard({ onSelectAlert }) {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
-            <Kanban className="w-4 h-4 text-slate-700" />
+            <Kanban className="w-4 h-4 text-blue-600" />
             <span>Fraud Operations Incident Kanban</span>
           </h3>
           <p className="text-xs text-slate-500 font-medium">Drag or advance incidents across investigation stages with automated audit tracking</p>
@@ -83,7 +83,7 @@ export default function InvestigationBoard({ onSelectAlert }) {
           return (
             <div
               key={col.id}
-              className="rounded-xl bg-slate-50 border border-slate-200 p-3.5 space-y-3 min-h-[500px] flex flex-col"
+              className="rounded-xl bg-slate-100/70 border border-slate-200/90 p-3.5 space-y-3 min-h-[500px] flex flex-col"
             >
               {/* Column Header */}
               <div className="flex items-center justify-between pb-2 border-b border-slate-200">
@@ -104,10 +104,10 @@ export default function InvestigationBoard({ onSelectAlert }) {
                       <div
                         key={card.alertId}
                         onClick={() => onSelectAlert(card)}
-                        className="p-3.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 transition cursor-pointer space-y-2 shadow-card hover:shadow-card-hover group"
+                        className="p-3.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 hover:border-slate-300 transition cursor-pointer space-y-2 shadow-card hover:shadow-card-hover group"
                       >
                         <div className="flex items-center justify-between">
-                          <span className="font-mono text-[11px] text-slate-600 group-hover:underline font-bold">
+                          <span className="font-mono text-[11px] text-slate-600 group-hover:text-blue-600 font-bold">
                             {card.alertId}
                           </span>
                           <span className={`text-[10px] font-mono px-2 py-0.5 rounded-md uppercase ${risk.badge}`}>
@@ -123,7 +123,7 @@ export default function InvestigationBoard({ onSelectAlert }) {
                         </div>
 
                         <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1.5 border-t border-slate-100 font-medium">
-                          <span>Risk: <strong className="text-slate-900 font-mono">{card.riskScoreAtCreation}</strong></span>
+                          <span>Risk: <strong className="text-rose-700 font-mono">{card.riskScoreAtCreation}</strong></span>
                           <span>{card.assignedTo || 'unassigned'}</span>
                         </div>
 
@@ -132,7 +132,7 @@ export default function InvestigationBoard({ onSelectAlert }) {
                           <select
                             value={card.status}
                             onChange={(e) => moveAlert(card.alertId, e.target.value, e)}
-                            className="w-full px-2 py-1 rounded-lg bg-slate-50 border border-slate-200 text-[10px] text-slate-700 font-medium focus:bg-white focus:outline-none focus:border-slate-900"
+                            className="w-full px-2 py-1 rounded-lg bg-slate-50 border border-slate-200 text-[10px] text-slate-700 font-medium focus:bg-white focus:outline-none focus:border-blue-600"
                           >
                             <option value="Open">Stage → Open</option>
                             <option value="Investigating">Stage → Investigating</option>

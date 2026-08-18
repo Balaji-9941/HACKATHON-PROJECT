@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, ChevronRight } from 'lucide-react';
+import { Search, ShieldAlert, ChevronRight } from 'lucide-react';
 import { fetchAPI, getRiskColor } from '../../utils/api';
 import { useSocket } from '../../context/SocketContext';
 import { useAuth } from '../../context/AuthContext';
@@ -74,7 +74,7 @@ export default function AlertQueue({ onSelectAlert }) {
         <div>
           <h3 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
             <span>Investigator Incident Triage Queue</span>
-            <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-800 font-mono text-[10px] border border-slate-200 font-bold">
+            <span className="px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 font-mono text-[10px] border border-rose-200 font-bold">
               {filtered.length} Incidents
             </span>
           </h3>
@@ -88,7 +88,7 @@ export default function AlertQueue({ onSelectAlert }) {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search alert / customer..."
-            className="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-slate-900"
+            className="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-blue-600"
           />
 
           <select
@@ -109,9 +109,9 @@ export default function AlertQueue({ onSelectAlert }) {
             className="px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-700 font-medium focus:bg-white focus:outline-none"
           >
             <option value="ALL">All Severities</option>
-            <option value="critical">Critical Anomaly</option>
-            <option value="high">High Variance</option>
-            <option value="medium">Medium Risk</option>
+            <option value="critical">🚨 Critical</option>
+            <option value="high">⚠️ High</option>
+            <option value="medium">⚡ Medium</option>
           </select>
         </div>
       </div>
@@ -120,7 +120,7 @@ export default function AlertQueue({ onSelectAlert }) {
       <div className="overflow-x-auto rounded-lg border border-slate-200">
         <table className="w-full text-left text-xs">
           <thead>
-            <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold text-[11px]">
+            <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-semibold text-[11px]">
               <th className="py-2.5 pl-3">Alert ID</th>
               <th className="py-2.5">Customer</th>
               <th className="py-2.5">Severity</th>
@@ -147,9 +147,9 @@ export default function AlertQueue({ onSelectAlert }) {
                   <tr
                     key={alert.alertId}
                     onClick={() => onSelectAlert(alert)}
-                    className="hover:bg-slate-50 cursor-pointer transition group"
+                    className="hover:bg-slate-50/80 cursor-pointer transition group"
                   >
-                    <td className="py-3 pl-3 font-mono font-bold text-slate-900 group-hover:underline">
+                    <td className="py-3 pl-3 font-mono font-bold text-slate-900 group-hover:text-blue-600">
                       {alert.alertId}
                     </td>
                     <td className="py-3">
@@ -161,11 +161,16 @@ export default function AlertQueue({ onSelectAlert }) {
                         {alert.severity}
                       </span>
                     </td>
-                    <td className="py-3 font-mono font-bold text-slate-950">
+                    <td className="py-3 font-mono font-extrabold text-rose-700">
                       {alert.riskScoreAtCreation}/100
                     </td>
                     <td className="py-3">
-                      <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-md border bg-slate-100 text-slate-800 border-slate-200">
+                      <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-md border ${
+                        alert.status === 'Open' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                        alert.status === 'Investigating' ? 'bg-amber-50 text-amber-800 border-amber-200' :
+                        alert.status === 'Resolved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                        'bg-slate-100 text-slate-700 border-slate-200'
+                      }`}>
                         {alert.status}
                       </span>
                     </td>

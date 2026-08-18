@@ -13,7 +13,7 @@ export default function ProfileScreen({ onSwitchToAdmin }) {
 
       {/* Customer Avatar & Header */}
       <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-card text-center space-y-3">
-        <div className="w-16 h-16 rounded-full overflow-hidden mx-auto border-2 border-slate-900 bg-slate-100 flex items-center justify-center text-lg font-bold text-slate-800 shadow-xs">
+        <div className="w-16 h-16 rounded-full overflow-hidden mx-auto border-2 border-blue-600 bg-slate-100 flex items-center justify-center text-lg font-bold text-slate-800 shadow-xs">
           {activeCustomer.avatar && activeCustomer.avatar.startsWith('http') ? (
             <img src={activeCustomer.avatar} alt={activeCustomer.name} className="w-full h-full object-cover" />
           ) : (
@@ -23,8 +23,8 @@ export default function ProfileScreen({ onSwitchToAdmin }) {
 
         <div>
           <h2 className="text-base font-bold text-slate-950">{activeCustomer.name}</h2>
-          <p className="text-xs text-slate-600 font-mono font-medium mt-0.5">{activeCustomer.upiId}</p>
-          <span className="inline-block mt-2 px-2.5 py-0.5 text-[11px] font-semibold rounded-md bg-slate-100 text-slate-700 border border-slate-200">
+          <p className="text-xs text-blue-700 font-mono font-medium mt-0.5">{activeCustomer.upiId}</p>
+          <span className="inline-block mt-2 px-2.5 py-0.5 text-[11px] font-semibold rounded-md bg-blue-50 text-blue-800 border border-blue-200">
             Account Age: {activeCustomer.accountAgeDays || 420} Days
           </span>
         </div>
@@ -40,7 +40,7 @@ export default function ProfileScreen({ onSwitchToAdmin }) {
               onClick={() => setActiveCustomer(c)}
               className={`w-full p-2.5 rounded-xl border text-xs flex items-center justify-between transition ${
                 c.customerId === activeCustomer.customerId
-                  ? 'bg-slate-900 border-slate-900 text-white font-bold'
+                  ? 'bg-blue-600 border-blue-600 text-white font-bold shadow-xs'
                   : 'bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
@@ -57,7 +57,7 @@ export default function ProfileScreen({ onSwitchToAdmin }) {
           onClick={onSwitchToAdmin}
           className="w-full py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-card transition flex items-center justify-center space-x-2"
         >
-          <Shield className="w-4 h-4" />
+          <Shield className="w-4 h-4 text-blue-400" />
           <span>Switch to Investigator Command Center →</span>
         </button>
       </div>
