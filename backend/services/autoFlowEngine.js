@@ -26,7 +26,9 @@ class AutoFlowEngine {
   async init(io) {
     this.io = io;
     try {
-      this.customerCache = await Customer.find().limit(20);
+      this.customerCache = await Customer.find({
+        customerId: { $nin: ['CUST-1001', 'CUST-1002', 'CUST-1003'] }
+      }).limit(20);
       this.merchantCache = await Merchant.find().limit(10);
     } catch (e) {
       console.warn('[AutoFlowEngine] Failed to cache customers/merchants on init:', e.message);

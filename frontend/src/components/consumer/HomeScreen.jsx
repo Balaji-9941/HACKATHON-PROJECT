@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowUpRight, Shield, ChevronRight, ExternalLink } from 'lucide-react';
+import { ArrowUpRight, Shield, ChevronRight, ExternalLink, ChevronDown, UserCheck } from 'lucide-react';
 import { useCustomer } from '../../context/CustomerContext';
 import { fetchAPI, formatCurrency, getRiskColor } from '../../utils/api';
 import BalanceCard from './BalanceCard';
@@ -11,6 +11,7 @@ import SecurityCenter from './SecurityCenter';
 import ProfileScreen from './ProfileScreen';
 import BottomNav from './BottomNav';
 import TransactionDetail from './TransactionDetail';
+import UserSwitcherModal from './UserSwitcherModal';
 
 export default function HomeScreen({ onSwitchToAdmin }) {
   const { activeCustomer, refreshCustomer, merchants } = useCustomer();
@@ -19,6 +20,7 @@ export default function HomeScreen({ onSwitchToAdmin }) {
   const [preselectedRecipient, setPreselectedRecipient] = useState(null);
   const [recentTxns, setRecentTxns] = useState([]);
   const [selectedTxn, setSelectedTxn] = useState(null);
+  const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
 
   const loadRecentTransactions = async () => {
     if (!activeCustomer) return;
@@ -78,10 +80,14 @@ export default function HomeScreen({ onSwitchToAdmin }) {
   return (
     <div className="max-w-md mx-auto min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-between p-4 pb-20">
       <div className="space-y-4">
-        {/* Top Header */}
+        {/* Top Header with Clickable Account Switcher */}
         <div className="flex items-center justify-between pt-1">
-          <div className="flex items-center space-x-2.5">
-            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-blue-600 bg-slate-100 flex items-center justify-center font-bold text-slate-800 shadow-xs">
+          <button
+            onClick={() => setIsSwitcherOpen(true)}
+            className="flex items-center space-x-2.5 p-1.5 -ml-1.5 rounded-2xl hover:bg-slate-200/70 transition group text-left"
+            title="Click to switch account"
+          >
+            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-blue-600 bg-slate-100 flex items-center justify-center font-bold text-slate-800 shadow-xs group-hover:scale-105 transition">
               {activeCustomer?.avatar && activeCustomer.avatar.startsWith('http') ? (
                 <img src={activeCustomer.avatar} alt={activeCustomer.name} className="w-full h-full object-cover" />
               ) : (
@@ -89,10 +95,18 @@ export default function HomeScreen({ onSwitchToAdmin }) {
               )}
             </div>
             <div>
-              <p className="text-[11px] text-slate-500 font-medium">Good day,</p>
-              <h2 className="text-sm font-bold text-slate-950 leading-tight">{activeCustomer?.name}</h2>
+              <div className="flex items-center space-x-1">
+                <p className="text-[11px] text-slate-500 font-medium">Good day,</p>
+                <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.2 rounded-md border border-blue-100 flex items-center space-x-0.5 group-hover:bg-blue-100 transition">
+                  <span>Switch</span>
+                  <ChevronDown className="w-2.5 h-2.5" />
+                </span>
+              </div>
+              <h2 className="text-sm font-bold text-slate-950 leading-tight group-hover:text-blue-600 transition">
+                {activeCustomer?.name}
+              </h2>
             </div>
-          </div>
+          </button>
 
           <button
             onClick={onSwitchToAdmin}
@@ -129,7 +143,7 @@ export default function HomeScreen({ onSwitchToAdmin }) {
               onNewContact={() => handleStartSend()}
             />
 
-            {/* Recent Activity List */}
+            {/* Recent Activity List (User's real transactions only) */}
             <div className="space-y-2.5">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Recent Transactions</h3>
@@ -141,70 +155,83 @@ export default function HomeScreen({ onSwitchToAdmin }) {
                 </button>
               </div>
 
-              <div className="space-y-2">
-                {recentTxns.length === 0 ? (
-                  <div className="p-4 rounded-xl bg-white border border-slate-200 text-center text-xs text-slate-500 shadow-card font-medium">
-                    No transactions yet. Tap "Pay UPI ID" to test payment telemetry.
-                  </div>
-                ) : (
-                  recentTxns.map((txn) => {
-                    const risk = getRiskColor(txn.alertSeverity);
+              {recentTxns.length === 0 ? (
+                <div className="p-6 rounded-2xl bg-white border border-slate-200 text-center space-y-1 shadow-card">
+                  <p className="text-xs font-bold text-slate-800">No transactions yet</p>
+                  <p className="text-[11px] text-slate-500">Send money to any contact or merchant to begin!</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {recentTxns.map((txn) => {
+                    const isIncoming = txn.recipientUpiId && activeCustomer?.upiId && 
+                                       txn.recipientUpiId.toLowerCase() === activeCustomer.upiId.toLowerCase() &&
+                                       txn.customerId !== activeCustomer.customerId;
+
                     return (
                       <button
                         key={txn.transactionId}
                         onClick={() => setSelectedTxn(txn)}
-                        className="w-full p-3.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/80 shadow-xs hover:shadow-card flex items-center justify-between transition group text-left"
+                        className="w-full p-3 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/80 shadow-xs hover:shadow-card flex items-center justify-between transition group text-left"
                       >
                         <div className="flex items-center space-x-3 min-w-0">
-                          <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700">
-                            <ArrowUpRight className="w-4 h-4 text-slate-700 group-hover:text-blue-600 transition" />
+                          <div className={`w-9 h-9 rounded-xl border flex items-center justify-center ${
+                            isIncoming ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-slate-100 border-slate-200 text-slate-600'
+                          }`}>
+                            <ArrowUpRight className={`w-4 h-4 ${isIncoming ? 'rotate-180 text-emerald-600' : 'text-rose-600'}`} />
                           </div>
                           <div className="min-w-0">
                             <p className="text-xs font-bold text-slate-900 truncate group-hover:text-blue-700 transition">
-                              {txn.recipientName || txn.recipientUpiId}
+                              {isIncoming ? `Received from ${txn.customerId}` : (txn.recipientName || txn.recipientUpiId)}
                             </p>
                             <p className="text-[11px] text-slate-500 font-medium">
-                              {new Date(txn.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                              {new Date(txn.timestamp).toLocaleDateString(undefined, {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
                             </p>
                           </div>
                         </div>
 
                         <div className="flex items-center space-x-2 shrink-0">
                           <div className="text-right">
-                            <p className="text-xs font-extrabold text-slate-900 font-mono">-{formatCurrency(txn.amount)}</p>
-                            <div className="flex items-center justify-end space-x-1 mt-0.5">
-                              <span
-                                className={`w-1.5 h-1.5 rounded-full ${
-                                  txn.totalRiskScore <= 30
-                                    ? 'bg-emerald-600'
-                                    : txn.totalRiskScore <= 50
-                                    ? 'bg-yellow-500'
-                                    : txn.totalRiskScore <= 70
-                                    ? 'bg-amber-500'
-                                    : 'bg-rose-600'
-                                }`}
-                              />
-                              <span className="text-[10px] font-mono text-slate-500 font-semibold">{txn.totalRiskScore}</span>
-                            </div>
+                            <p className={`text-xs font-extrabold font-mono ${
+                              isIncoming ? 'text-emerald-600' : 'text-slate-900'
+                            }`}>
+                              {isIncoming ? `+${formatCurrency(txn.amount)}` : `-${formatCurrency(txn.amount)}`}
+                            </p>
+                            <span className="text-[10px] font-mono text-slate-400 font-semibold">
+                              Risk: {txn.totalRiskScore}/100
+                            </span>
                           </div>
-                          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-700" />
+                          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-700 transition" />
                         </div>
                       </button>
                     );
-                  })
-                )}
-              </div>
+                  })}
+                </div>
+              )}
             </div>
           </div>
         )}
 
         {activeTab === 'passbook' && <PassbookScreen onBack={() => setActiveTab('home')} />}
-        {activeTab === 'security' && <SecurityCenter />}
-        {activeTab === 'profile' && <ProfileScreen onSwitchToAdmin={onSwitchToAdmin} />}
+        {activeTab === 'security' && <SecurityCenter customer={activeCustomer} />}
+        {activeTab === 'profile' && <ProfileScreen onSwitchToAdmin={onSwitchToAdmin} onOpenSwitcher={() => setIsSwitcherOpen(true)} />}
       </div>
 
-      {/* Bottom Navigation */}
+      {/* Bottom Nav */}
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+
+      {/* User Switcher Modal */}
+      <UserSwitcherModal
+        isOpen={isSwitcherOpen}
+        onClose={() => {
+          setIsSwitcherOpen(false);
+          loadRecentTransactions();
+        }}
+      />
     </div>
   );
 }

@@ -71,7 +71,7 @@ router.post('/confirm', async (req, res) => {
       deviceName = 'Pixel-8-Pro',
       merchantCategory = 'peer_to_peer',
       note = '',
-      flowSource = 'consumer',
+      flowSource = 'consumer_live',
       scenarioType = null,
       isSimulatedScenario = false,
       userAcknowledgedAt = null
@@ -137,7 +137,7 @@ router.post('/confirm', async (req, res) => {
       note,
       status: 'SETTLED',
       dataSource: customer.dataSource || 'live',
-      flowSource,
+      flowSource: flowSource || 'consumer_live',
       isSimulatedScenario: Boolean(isSimulatedScenario || scenarioType),
       scenarioType,
 
@@ -198,10 +198,10 @@ router.post('/confirm', async (req, res) => {
   }
 });
 
-// GET /api/transactions (Query with filtering & pagination - shows outgoing & incoming for customer)
+// GET /api/transactions (Query with filtering & pagination)
 router.get('/', async (req, res) => {
   try {
-    const { customerId, severity, status, limit = 50, page = 1 } = req.query;
+    const { customerId, severity, status, limit = 50, page = 1, includeSimulated } = req.query;
     const filter = {};
 
     if (customerId) {
@@ -213,6 +213,12 @@ router.get('/', async (req, res) => {
         ];
       } else {
         filter.customerId = customerId;
+      }
+
+      // Filter out simulated and autoflow background stream transactions from the user's personal ledger
+      if (includeSimulated !== 'true') {
+        filter.flowSource = { $nin: ['autoflow_stream', 'autoflow_replay', 'scenario_simulation', 'autoflow_scenario'] };
+        filter.isSimulatedScenario = { $ne: true };
       }
     }
 

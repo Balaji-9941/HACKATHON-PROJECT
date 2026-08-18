@@ -1,10 +1,10 @@
 import React from 'react';
-import { Shield } from 'lucide-react';
+import { Shield, UserCheck, RefreshCw } from 'lucide-react';
 import { useCustomer } from '../../context/CustomerContext';
 import { formatCurrency } from '../../utils/api';
 
-export default function ProfileScreen({ onSwitchToAdmin }) {
-  const { activeCustomer, customers, setActiveCustomer, refreshCustomer } = useCustomer();
+export default function ProfileScreen({ onSwitchToAdmin, onOpenSwitcher }) {
+  const { activeCustomer, customers, refreshCustomer } = useCustomer();
 
   if (!activeCustomer) return null;
 
@@ -14,7 +14,17 @@ export default function ProfileScreen({ onSwitchToAdmin }) {
 
   return (
     <div className="space-y-4 animate-fade-in text-slate-900">
-      <h3 className="text-base font-bold text-slate-900">Profile & Accounts</h3>
+      <div className="flex items-center justify-between">
+        <h3 className="text-base font-bold text-slate-900">Profile & Accounts</h3>
+        <button
+          onClick={() => refreshCustomer(activeCustomer.customerId)}
+          className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition flex items-center space-x-1 text-xs"
+          title="Refresh live balance"
+        >
+          <RefreshCw className="w-3.5 h-3.5 text-slate-600" />
+          <span className="text-[11px] font-medium">Sync</span>
+        </button>
+      </div>
 
       {/* Customer Avatar & Header */}
       <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-card text-center space-y-3">
@@ -42,28 +52,42 @@ export default function ProfileScreen({ onSwitchToAdmin }) {
 
       {/* Customer Account Switcher for Demo evaluation */}
       <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-card space-y-2">
-        <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Switch Demo Consumer Account</h4>
-        <div className="space-y-1.5">
-          {customers.slice(0, 10).map((c) => (
+        <div className="flex items-center justify-between">
+          <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Switch Active Account</h4>
+          {onOpenSwitcher && (
             <button
-              key={c.customerId}
-              onClick={() => handleSelectCustomer(c)}
-              className={`w-full p-2.5 rounded-xl border text-xs flex items-center justify-between transition ${
-                c.customerId === activeCustomer.customerId
-                  ? 'bg-blue-600 border-blue-600 text-white font-bold shadow-xs'
-                  : 'bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-100'
-              }`}
+              onClick={onOpenSwitcher}
+              className="text-[11px] text-blue-600 hover:underline font-bold"
             >
-              <div className="text-left">
-                <p className="font-semibold">{c.name}</p>
-                <p className="text-[10px] font-mono opacity-80">{c.upiId}</p>
-              </div>
-              <div className="text-right">
-                <p className="font-mono font-bold">{formatCurrency(c.balance || 0)}</p>
-                <p className="text-[10px] opacity-75">{c.customerId}</p>
-              </div>
+              View all ({customers.length})
             </button>
-          ))}
+          )}
+        </div>
+        
+        <div className="space-y-1.5">
+          {customers.slice(0, 5).map((c) => {
+            const isActive = c.customerId === activeCustomer.customerId;
+            return (
+              <button
+                key={c.customerId}
+                onClick={() => handleSelectCustomer(c)}
+                className={`w-full p-2.5 rounded-xl border text-xs flex items-center justify-between transition ${
+                  isActive
+                    ? 'bg-blue-600 border-blue-600 text-white font-bold shadow-xs'
+                    : 'bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                <div className="text-left">
+                  <p className="font-semibold">{c.name} {isActive && '✓'}</p>
+                  <p className={`text-[10px] font-mono ${isActive ? 'text-blue-100' : 'text-slate-500'}`}>{c.upiId}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-mono font-bold">{formatCurrency(c.balance || 0)}</p>
+                  <p className={`text-[10px] ${isActive ? 'text-blue-200' : 'text-slate-400'}`}>{c.customerId}</p>
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 
