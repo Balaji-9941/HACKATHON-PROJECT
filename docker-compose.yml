@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # 1. MongoDB Database
+  mongodb:
+    image: mongo:6.0
+    container_name: paytelemetry-mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - paytelemetry-network
+
+  # 2. Python ML Microservice (FastAPI + XGBoost + TreeSHAP)
+  ml-service:
+    build:
+      context: ./ml-service
+      dockerfile: Dockerfile
+    container_name: paytelemetry-ml
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+    networks:
+      - paytelemetry-network
+
+  # 3. Express Backend Gateway (Node.js + Socket.io)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: paytelemetry-backend
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - MONGO_URI=mongodb://mongodb:27017/paytelemetry
+      - ML_SERVICE_URL=http://ml-service:8000
+      - AUTO_FLOW_ENABLED=true
+      - NODE_ENV=production
+    depends_on:
+      - mongodb
+      - ml-service
+    networks:
+      - paytelemetry-network
+
+  # 4. React Frontend Client (Nginx + SPA)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: paytelemetry-frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - paytelemetry-network
+
+volumes:
+  mongo_data:
+    driver: local
+
+networks:
+  paytelemetry-network:
+    driver: bridge
