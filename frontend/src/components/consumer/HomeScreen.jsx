@@ -47,9 +47,11 @@ export default function HomeScreen({ onSwitchToAdmin }) {
           onClose={() => {
             setIsSendFlowOpen(false);
             setPreselectedRecipient(null);
+            if (activeCustomer) refreshCustomer(activeCustomer.customerId);
             loadRecentTransactions();
           }}
           onPaymentComplete={() => {
+            if (activeCustomer) refreshCustomer(activeCustomer.customerId);
             loadRecentTransactions();
           }}
         />

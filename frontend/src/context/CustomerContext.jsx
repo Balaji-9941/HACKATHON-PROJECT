@@ -9,10 +9,19 @@ export const CustomerProvider = ({ children }) => {
   const [merchants, setMerchants] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const refreshCustomer = async (customerId = 'CUST-1001') => {
+  const refreshCustomer = async (customerId = null) => {
     try {
-      const cust = await fetchAPI(`/customers/${customerId}`);
-      setActiveCustomer(cust);
+      const targetId = customerId || activeCustomer?.customerId || 'CUST-1001';
+      const [cust, custList] = await Promise.all([
+        fetchAPI(`/customers/${targetId}`),
+        fetchAPI('/customers')
+      ]);
+      if (cust && !cust.error) {
+        setActiveCustomer(cust);
+      }
+      if (Array.isArray(custList)) {
+        setCustomers(custList);
+      }
     } catch (err) {
       console.error('[CustomerContext] Failed to load customer:', err.message);
     }
@@ -25,9 +34,9 @@ export const CustomerProvider = ({ children }) => {
         fetchAPI('/customers'),
         fetchAPI('/merchants')
       ]);
-      setCustomers(custList);
-      setMerchants(merchList);
-      const defaultCust = custList.find(c => c.customerId === 'CUST-1001') || custList[0];
+      setCustomers(custList || []);
+      setMerchants(merchList || []);
+      const defaultCust = (custList || []).find(c => c.customerId === 'CUST-1001') || custList?.[0];
       setActiveCustomer(defaultCust);
     } catch (err) {
       console.error('[CustomerContext] Init error:', err.message);

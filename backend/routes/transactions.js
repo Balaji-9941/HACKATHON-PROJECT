@@ -57,7 +57,7 @@ router.post('/pre-check', async (req, res) => {
   }
 });
 
-// POST /api/transactions/confirm (Pure ML Settlement & Real-time TreeSHAP Recording)
+// POST /api/transactions/confirm (Pure ML Settlement & Double-Entry Balance Update)
 router.post('/confirm', async (req, res) => {
   const reqStart = process.hrtime();
   try {
@@ -88,6 +88,7 @@ router.post('/confirm', async (req, res) => {
 
     const merchant = await Merchant.findOne({ upiId: recipientUpiId });
 
+    // Fetch recent transactions in past 120s
     const cutoff = new Date(Date.now() - 120000);
     const recentTxns = await Transaction.find({
       customerId,
@@ -102,13 +103,25 @@ router.post('/confirm', async (req, res) => {
       recentTxns
     );
 
-    // 2. Settle transaction immediately (Financial balance deduction)
+    // 2. Settle transaction immediately (Financial balance deduction for Sender)
     const transactionId = `TXN-${Date.now()}-${Math.floor(1000 + (assessment.totalRiskScore * 9))}`;
     
-    // Debit customer balance
+    // Debit sender customer balance
     customer.balance = Math.max(0, customer.balance - amount);
     customer.totalTransactions = (customer.totalTransactions || 0) + 1;
     await customer.save();
+
+    // Credit recipient customer balance if recipient is an internal customer account
+    if (recipientUpiId) {
+      const recipientCustomer = await Customer.findOne({
+        upiId: { $regex: new RegExp(`^${recipientUpiId.trim()}$`, 'i') }
+      });
+      if (recipientCustomer) {
+        recipientCustomer.balance = (recipientCustomer.balance || 0) + amount;
+        recipientCustomer.totalTransactions = (recipientCustomer.totalTransactions || 0) + 1;
+        await recipientCustomer.save();
+      }
+    }
 
     const transactionDoc = new Transaction({
       transactionId,
@@ -137,7 +150,7 @@ router.post('/confirm', async (req, res) => {
       modelTier: 2,
       mlProbability: assessment.mlProbability,
       shapValues: assessment.shapValues,
-      modelVersion: assessment.modelVersion || 'xgboost-ml-v3',
+      modelVersion: assessment.modelVersion || 'balanced-xgboost-v4',
       alertSeverity: assessment.alertSeverity,
       userFrictionLevel: assessment.userFrictionLevel,
       latencyMs: assessment.latencyMs,
@@ -185,13 +198,24 @@ router.post('/confirm', async (req, res) => {
   }
 });
 
-// GET /api/transactions (Query with filtering & pagination)
+// GET /api/transactions (Query with filtering & pagination - shows outgoing & incoming for customer)
 router.get('/', async (req, res) => {
   try {
     const { customerId, severity, status, limit = 50, page = 1 } = req.query;
     const filter = {};
 
-    if (customerId) filter.customerId = customerId;
+    if (customerId) {
+      const currentCust = await Customer.findOne({ customerId });
+      if (currentCust && currentCust.upiId) {
+        filter.$or = [
+          { customerId },
+          { recipientUpiId: currentCust.upiId }
+        ];
+      } else {
+        filter.customerId = customerId;
+      }
+    }
+
     if (severity && severity !== 'ALL') filter.alertSeverity = severity.toLowerCase();
     if (status) filter.status = status;
 

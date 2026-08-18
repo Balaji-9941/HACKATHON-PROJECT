@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, ArrowUpRight, ChevronRight } from 'lucide-react';
+import { Search, ArrowUpRight, ArrowDownLeft, ChevronRight } from 'lucide-react';
 import { fetchAPI, formatCurrency, getRiskColor } from '../../utils/api';
 import { useCustomer } from '../../context/CustomerContext';
 import TransactionDetail from './TransactionDetail';
@@ -97,7 +97,10 @@ export default function PassbookScreen({ onBack }) {
           <div className="text-center py-8 text-xs text-slate-500 font-medium">No matching transactions found</div>
         ) : (
           filtered.map((txn) => {
-            const risk = getRiskColor(txn.alertSeverity);
+            const isIncoming = txn.recipientUpiId && activeCustomer?.upiId && 
+                               txn.recipientUpiId.toLowerCase() === activeCustomer.upiId.toLowerCase() &&
+                               txn.customerId !== activeCustomer.customerId;
+
             return (
               <button
                 key={txn.transactionId}
@@ -105,12 +108,18 @@ export default function PassbookScreen({ onBack }) {
                 className="w-full p-3.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/80 shadow-xs hover:shadow-card flex items-center justify-between transition group text-left"
               >
                 <div className="flex items-center space-x-3 min-w-0">
-                  <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600">
-                    <ArrowUpRight className="w-5 h-5 text-rose-600" />
+                  <div className={`w-10 h-10 rounded-xl border flex items-center justify-center ${
+                    isIncoming ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-slate-100 border-slate-200 text-slate-600'
+                  }`}>
+                    {isIncoming ? (
+                      <ArrowDownLeft className="w-5 h-5 text-emerald-600" />
+                    ) : (
+                      <ArrowUpRight className="w-5 h-5 text-rose-600" />
+                    )}
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-slate-900 truncate group-hover:text-blue-700 transition">
-                      {txn.recipientName || txn.recipientUpiId}
+                      {isIncoming ? `Received from ${txn.customerId}` : (txn.recipientName || txn.recipientUpiId)}
                     </p>
                     <p className="text-[11px] text-slate-500 font-medium">
                       {new Date(txn.timestamp).toLocaleDateString(undefined, {
@@ -125,7 +134,11 @@ export default function PassbookScreen({ onBack }) {
 
                 <div className="flex items-center space-x-2 shrink-0">
                   <div className="text-right">
-                    <p className="text-xs font-extrabold text-slate-900 font-mono">-{formatCurrency(txn.amount)}</p>
+                    <p className={`text-xs font-extrabold font-mono ${
+                      isIncoming ? 'text-emerald-600' : 'text-slate-900'
+                    }`}>
+                      {isIncoming ? `+${formatCurrency(txn.amount)}` : `-${formatCurrency(txn.amount)}`}
+                    </p>
                     <div className="flex items-center justify-end space-x-1 mt-0.5">
                       <span
                         className={`w-1.5 h-1.5 rounded-full ${

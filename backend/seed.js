@@ -56,14 +56,14 @@ const seedData = async () => {
     await Investigator.insertMany(investigators);
     console.log(`[Seed] Seeded ${investigators.length} investigators.`);
 
-    // 3. Seed Primary Consumer Accounts with High Balances
+    // 3. Seed Primary Consumer Accounts with Full Balances (1 Crore / 50 Lakhs)
     const primaryCustomers = [
       {
         customerId: 'CUST-1001',
         name: 'Aarav Patel',
         upiId: 'aarav.patel@okaxis',
         avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80',
-        balance: 2500000, // ₹25,00,000 (25 Lakhs)
+        balance: 10000000, // ₹1,00,00,000 (1 Crore)
         avgTransaction: 650,
         stdTransaction: 200,
         usualLocation: 'Bangalore, IN',
@@ -86,7 +86,7 @@ const seedData = async () => {
         name: 'Rohan Verma',
         upiId: 'rohan.v@okhdfcbank',
         avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=120&auto=format&fit=crop&q=80',
-        balance: 1500000, // ₹15,00,000 (15 Lakhs)
+        balance: 5000000, // ₹50,00,000 (50 Lakhs)
         avgTransaction: 400,
         stdTransaction: 120,
         usualLocation: 'Bangalore, IN',
@@ -106,7 +106,7 @@ const seedData = async () => {
         name: 'Sneha Kapoor',
         upiId: 'sneha.k@okicici',
         avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80',
-        balance: 3500000, // ₹35,00,000 (35 Lakhs)
+        balance: 10000000, // ₹1,00,00,000 (1 Crore)
         avgTransaction: 1200,
         stdTransaction: 450,
         usualLocation: 'Mumbai, IN',
@@ -193,14 +193,14 @@ const seedData = async () => {
               groundTruthLabel: isFraud
             });
 
-            // Collect extra customer profiles with high balances
+            // Collect extra customer profiles with full balances (50 Lakhs to 1 Crore)
             if (!extraCustomersMap.has(custId) && extraCustomersMap.size < 40) {
               extraCustomersMap.set(custId, {
                 customerId: custId,
                 name: custName,
                 upiId: `${custId.toLowerCase()}@okhdfc`,
                 avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80',
-                balance: 1000000 + Math.round((parseFloat(row.oldbalanceOrg) || 25000) * 10), // 10-30 Lakhs
+                balance: 5000000 + Math.round((parseFloat(row.oldbalanceOrg) || 25000) * 100), // 50 Lakhs - 1 Crore
                 avgTransaction: Math.round(baseline) || 600,
                 stdTransaction: Math.round(baseline * 0.3) || 180,
                 usualLocation: row.location || 'Bangalore, IN',
