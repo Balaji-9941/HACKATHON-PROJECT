@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldAlert, AlertTriangle, CheckCircle, Clock, Search, Filter, ChevronRight, UserCheck } from 'lucide-react';
+import { Search, ChevronRight } from 'lucide-react';
 import { fetchAPI, getRiskColor } from '../../utils/api';
 import { useSocket } from '../../context/SocketContext';
 import { useAuth } from '../../context/AuthContext';
@@ -32,8 +32,8 @@ export default function AlertQueue({ onSelectAlert }) {
   // Prepend real-time alert from Socket.io
   useEffect(() => {
     if (!latestAlert) return;
-    setAlerts(prev => {
-      const exists = prev.some(a => a.alertId === latestAlert.alertId);
+    setAlerts((prev) => {
+      const exists = prev.some((a) => a.alertId === latestAlert.alertId);
       if (exists) return prev;
       return [latestAlert, ...prev];
     });
@@ -46,20 +46,21 @@ export default function AlertQueue({ onSelectAlert }) {
         method: 'PUT',
         body: JSON.stringify({
           status: newStatus,
-          assignedTo: user?.username || 'analyst1'
-        })
+          assignedTo: user?.username || 'analyst1',
+        }),
       });
-      setAlerts(prev => prev.map(a => a.alertId === alertId ? updated : a));
+      setAlerts((prev) => prev.map((a) => (a.alertId === alertId ? updated : a)));
     } catch (err) {
       alert(`Status update failed: ${err.message}`);
     }
   };
 
-  const filtered = alerts.filter(a => {
-    const matchSearch = a.alertId?.toLowerCase().includes(search.toLowerCase()) ||
-                        a.transactionId?.toLowerCase().includes(search.toLowerCase()) ||
-                        a.customerId?.toLowerCase().includes(search.toLowerCase()) ||
-                        a.customerName?.toLowerCase().includes(search.toLowerCase());
+  const filtered = alerts.filter((a) => {
+    const matchSearch =
+      a.alertId?.toLowerCase().includes(search.toLowerCase()) ||
+      a.transactionId?.toLowerCase().includes(search.toLowerCase()) ||
+      a.customerId?.toLowerCase().includes(search.toLowerCase()) ||
+      a.customerName?.toLowerCase().includes(search.toLowerCase());
 
     if (!matchSearch) return false;
     if (statusFilter !== 'ALL' && a.status !== statusFilter) return false;
@@ -73,7 +74,7 @@ export default function AlertQueue({ onSelectAlert }) {
         <div>
           <h3 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
             <span>Investigator Incident Triage Queue</span>
-            <span className="px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 font-mono text-[10px] border border-rose-200 font-bold">
+            <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-800 font-mono text-[10px] border border-slate-200 font-bold">
               {filtered.length} Incidents
             </span>
           </h3>
@@ -87,7 +88,7 @@ export default function AlertQueue({ onSelectAlert }) {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search alert / customer..."
-            className="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-blue-600"
+            className="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-slate-900"
           />
 
           <select
@@ -108,9 +109,9 @@ export default function AlertQueue({ onSelectAlert }) {
             className="px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-700 font-medium focus:bg-white focus:outline-none"
           >
             <option value="ALL">All Severities</option>
-            <option value="critical">Critical</option>
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
+            <option value="critical">Critical Anomaly</option>
+            <option value="high">High Variance</option>
+            <option value="medium">Medium Risk</option>
           </select>
         </div>
       </div>
@@ -119,7 +120,7 @@ export default function AlertQueue({ onSelectAlert }) {
       <div className="overflow-x-auto rounded-lg border border-slate-200">
         <table className="w-full text-left text-xs">
           <thead>
-            <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-semibold text-[11px]">
+            <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold text-[11px]">
               <th className="py-2.5 pl-3">Alert ID</th>
               <th className="py-2.5">Customer</th>
               <th className="py-2.5">Severity</th>
@@ -140,7 +141,7 @@ export default function AlertQueue({ onSelectAlert }) {
                 <td colSpan={8} className="py-8 text-center text-slate-500 font-medium">No active alerts match current filters.</td>
               </tr>
             ) : (
-              filtered.map(alert => {
+              filtered.map((alert) => {
                 const risk = getRiskColor(alert.severity);
                 return (
                   <tr
@@ -148,7 +149,7 @@ export default function AlertQueue({ onSelectAlert }) {
                     onClick={() => onSelectAlert(alert)}
                     className="hover:bg-slate-50 cursor-pointer transition group"
                   >
-                    <td className="py-3 pl-3 font-mono font-bold text-slate-900 group-hover:text-blue-600">
+                    <td className="py-3 pl-3 font-mono font-bold text-slate-900 group-hover:underline">
                       {alert.alertId}
                     </td>
                     <td className="py-3">
@@ -160,16 +161,11 @@ export default function AlertQueue({ onSelectAlert }) {
                         {alert.severity}
                       </span>
                     </td>
-                    <td className="py-3 font-mono font-extrabold text-slate-900">
+                    <td className="py-3 font-mono font-bold text-slate-950">
                       {alert.riskScoreAtCreation}/100
                     </td>
                     <td className="py-3">
-                      <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-md border ${
-                        alert.status === 'Open' ? 'bg-red-50 text-red-700 border-red-200' :
-                        alert.status === 'Investigating' ? 'bg-amber-50 text-amber-800 border-amber-200' :
-                        alert.status === 'Resolved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                        'bg-slate-100 text-slate-600 border-slate-200'
-                      }`}>
+                      <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-md border bg-slate-100 text-slate-800 border-slate-200">
                         {alert.status}
                       </span>
                     </td>
@@ -177,7 +173,12 @@ export default function AlertQueue({ onSelectAlert }) {
                       {alert.assignedTo || 'unassigned'}
                     </td>
                     <td className="py-3 text-slate-500 text-[11px]">
-                      {new Date(alert.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      {new Date(alert.createdAt).toLocaleDateString(undefined, {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
                     </td>
                     <td className="py-3 text-right pr-3">
                       <select

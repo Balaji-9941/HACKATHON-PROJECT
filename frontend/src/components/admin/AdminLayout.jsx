@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Activity, RefreshCw, Bell, Search } from 'lucide-react';
+import { Shield, Activity } from 'lucide-react';
 import { fetchAPI } from '../../utils/api';
 import { useSocket } from '../../context/SocketContext';
 import AdminSidebar from './AdminSidebar';
@@ -18,7 +18,7 @@ import AutoFlowControlPanel from './AutoFlowControlPanel';
 import SystemHealthPanel from './SystemHealthPanel';
 
 export default function AdminLayout({ onSwitchToConsumer }) {
-  const { isConnected, latestAlert } = useSocket();
+  const { isConnected } = useSocket();
   const [activeTab, setActiveTab] = useState('stream');
   const [metrics, setMetrics] = useState(null);
   const [health, setHealth] = useState(null);
@@ -74,9 +74,9 @@ export default function AdminLayout({ onSwitchToConsumer }) {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto max-h-screen">
         {/* Top Header */}
-        <header className="h-16 border-b border-slate-200 bg-white/90 backdrop-blur-md px-6 flex items-center justify-between shrink-0 sticky top-0 z-20 shadow-xs">
+        <header className="h-16 border-b border-slate-200 bg-white px-6 flex items-center justify-between shrink-0 sticky top-0 z-20">
           <div className="flex items-center space-x-3">
-            <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+            <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">
               {activeTab === 'stream' ? 'Real-Time Monitoring & Telemetry' :
                activeTab === 'alerts' ? 'Security Incident Triage' :
                activeTab === 'kanban' ? 'Fraud Operations Workflow' :
@@ -90,9 +90,9 @@ export default function AdminLayout({ onSwitchToConsumer }) {
 
           <div className="flex items-center space-x-4">
             {/* Live Socket Status */}
-            <div className="flex items-center space-x-1.5 px-3 py-1 rounded-lg bg-slate-50 border border-slate-200 text-[11px] font-mono">
-              <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
-              <span className="text-slate-700 font-semibold">{isConnected ? 'LIVE FEED ACTIVE' : 'OFFLINE'}</span>
+            <div className="flex items-center space-x-2 px-3 py-1 rounded-md bg-slate-50 border border-slate-200 text-[11px] font-mono">
+              <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-slate-900' : 'bg-rose-500'}`} />
+              <span className="text-slate-700 font-semibold">{isConnected ? 'FEED CONNECTED' : 'DISCONNECTED'}</span>
             </div>
 
             {/* Live Time */}

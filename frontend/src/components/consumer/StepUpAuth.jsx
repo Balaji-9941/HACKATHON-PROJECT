@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { ShieldAlert, Fingerprint, Lock, X, CheckCircle2 } from 'lucide-react';
-import { formatCurrency } from '../../utils/api';
+import { ShieldAlert, Fingerprint, X } from 'lucide-react';
 
 export default function StepUpAuth({ isOpen, assessment, amount, recipient, onComplete, onCancel }) {
   const [pin, setPin] = useState('');
@@ -44,19 +43,17 @@ export default function StepUpAuth({ isOpen, assessment, amount, recipient, onCo
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/40 backdrop-blur-xs animate-fade-in">
-      <div className="w-full max-w-sm rounded-t-2xl sm:rounded-2xl bg-white border border-slate-200 p-6 shadow-2xl space-y-4">
+      <div className="w-full max-w-sm rounded-t-2xl sm:rounded-2xl bg-white border border-slate-200 p-6 shadow-modal space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2.5">
-            <div className="w-9 h-9 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600">
+            <div className="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-800">
               <ShieldAlert className="w-5 h-5" />
             </div>
             <div>
-              <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${
-                isCritical ? 'bg-red-100 text-red-800 border border-red-200' : 'bg-rose-100 text-rose-800 border border-rose-200'
-              }`}>
-                {isCritical ? 'Critical Security Step-Up' : 'Security PIN Verification'}
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 border border-slate-200">
+                {isCritical ? 'Critical Step-Up' : 'PIN Challenge'}
               </span>
-              <p className="text-xs text-slate-500 font-mono mt-0.5">Risk Score: {assessment.totalRiskScore}/100</p>
+              <p className="text-xs text-slate-500 font-mono mt-0.5">Score: {assessment.totalRiskScore}/100</p>
             </div>
           </div>
           <button onClick={onCancel} className="text-slate-400 hover:text-slate-700 p-1">
@@ -65,7 +62,7 @@ export default function StepUpAuth({ isOpen, assessment, amount, recipient, onCo
         </div>
 
         <div className="space-y-1">
-          <h3 className="text-sm font-bold text-slate-900">Enter 4-Digit UPI Security PIN</h3>
+          <h3 className="text-sm font-bold text-slate-900">Enter 4-Digit Security PIN</h3>
           <p className="text-xs text-slate-600 leading-relaxed">
             {assessment.fraudExplanation}
           </p>
@@ -78,7 +75,7 @@ export default function StepUpAuth({ isOpen, assessment, amount, recipient, onCo
               key={idx}
               className={`w-3.5 h-3.5 rounded-full border transition-all ${
                 pin.length > idx
-                  ? 'bg-rose-600 border-rose-600 scale-110 shadow-xs'
+                  ? 'bg-slate-900 border-slate-900 scale-110 shadow-xs'
                   : 'bg-slate-100 border-slate-300'
               }`}
             />
@@ -92,7 +89,7 @@ export default function StepUpAuth({ isOpen, assessment, amount, recipient, onCo
               key={num}
               onClick={() => handleKeyPress(num)}
               disabled={isVerifying}
-              className="h-11 rounded-xl bg-slate-50 hover:bg-slate-100 active:bg-slate-200 text-slate-900 font-bold text-base border border-slate-200/80 shadow-xs transition active:scale-95 font-mono"
+              className="h-11 rounded-xl bg-slate-50 hover:bg-slate-100 active:bg-slate-200 text-slate-900 font-bold text-base border border-slate-200 shadow-card transition active:scale-98 font-mono"
             >
               {num}
             </button>
@@ -100,7 +97,7 @@ export default function StepUpAuth({ isOpen, assessment, amount, recipient, onCo
           <button
             onClick={triggerBiometric}
             disabled={isVerifying}
-            className="h-11 rounded-xl bg-slate-50 hover:bg-slate-100 text-emerald-700 font-medium text-xs flex items-center justify-center border border-slate-200 transition"
+            className="h-11 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-medium text-xs flex items-center justify-center border border-slate-200 transition"
             title="Biometric Auth"
           >
             <Fingerprint className="w-5 h-5" />
@@ -108,7 +105,7 @@ export default function StepUpAuth({ isOpen, assessment, amount, recipient, onCo
           <button
             onClick={() => handleKeyPress(0)}
             disabled={isVerifying}
-            className="h-11 rounded-xl bg-slate-50 hover:bg-slate-100 active:bg-slate-200 text-slate-900 font-bold text-base border border-slate-200/80 shadow-xs transition active:scale-95 font-mono"
+            className="h-11 rounded-xl bg-slate-50 hover:bg-slate-100 active:bg-slate-200 text-slate-900 font-bold text-base border border-slate-200 shadow-card transition active:scale-98 font-mono"
           >
             0
           </button>
@@ -122,9 +119,9 @@ export default function StepUpAuth({ isOpen, assessment, amount, recipient, onCo
         </div>
 
         {isVerifying && (
-          <div className="flex items-center justify-center space-x-2 text-xs text-rose-700 py-1 font-medium">
-            <div className="w-3 h-3 rounded-full border-2 border-rose-600 border-t-transparent animate-spin" />
-            <span>Verifying cryptographic credentials...</span>
+          <div className="flex items-center justify-center space-x-2 text-xs text-slate-700 py-1 font-medium">
+            <div className="w-3 h-3 rounded-full border-2 border-slate-900 border-t-transparent animate-spin" />
+            <span>Verifying credentials...</span>
           </div>
         )}
       </div>

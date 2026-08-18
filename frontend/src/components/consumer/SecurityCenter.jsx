@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShieldCheck, ShieldAlert, Smartphone, MapPin, Key, Lock, CheckCircle2, RefreshCw } from 'lucide-react';
+import { Smartphone } from 'lucide-react';
 import { useCustomer } from '../../context/CustomerContext';
 
 export default function SecurityCenter() {
@@ -12,7 +12,7 @@ export default function SecurityCenter() {
   const score = activeCustomer.securityScore || 92;
 
   const handleRevokeDevice = (device) => {
-    setDevices(prev => prev.filter(d => d !== device));
+    setDevices((prev) => prev.filter((d) => d !== device));
   };
 
   return (
@@ -22,20 +22,20 @@ export default function SecurityCenter() {
       {/* Security Score Gauge Card */}
       <div className="p-5 rounded-2xl bg-white border border-slate-200 text-center space-y-3 shadow-card">
         <div className="relative inline-flex items-center justify-center">
-          <div className="w-22 h-22 rounded-full border-4 border-emerald-500 bg-emerald-50/50 flex items-center justify-center">
+          <div className="w-20 h-20 rounded-full border-4 border-slate-900 bg-slate-50 flex items-center justify-center">
             <div className="text-center">
-              <span className="text-2xl font-black text-slate-900 font-mono">{score}</span>
+              <span className="text-2xl font-black text-slate-950 font-mono">{score}</span>
               <span className="text-[10px] text-slate-500 font-semibold block -mt-1">/100</span>
             </div>
           </div>
         </div>
 
         <div>
-          <span className="inline-block px-2.5 py-0.5 text-xs font-bold rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300">
-            Excellent Protection Level
+          <span className="inline-block px-2.5 py-0.5 text-xs font-bold rounded-md bg-slate-100 text-slate-800 border border-slate-200">
+            Account Telemetry Baseline Active
           </span>
           <p className="text-xs text-slate-600 mt-2 max-w-xs mx-auto font-medium">
-            Your UPI account telemetry is healthy with registered hardware keys and established behavior baselines.
+            Your UPI account telemetry is verified with registered hardware keys and established behavior baselines.
           </p>
         </div>
       </div>
@@ -44,7 +44,7 @@ export default function SecurityCenter() {
       <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-card space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Smartphone className="w-4 h-4 text-blue-600" />
+            <Smartphone className="w-4 h-4 text-slate-700" />
             <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Authorized Devices</h4>
           </div>
           <span className="text-[11px] text-slate-500 font-mono">{devices.length} active</span>
@@ -54,14 +54,14 @@ export default function SecurityCenter() {
           {devices.map((device, idx) => (
             <div key={idx} className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
               <div className="flex items-center space-x-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="w-2 h-2 rounded-full bg-slate-900" />
                 <span className="font-semibold text-slate-800">{device}</span>
                 {idx === 0 && <span className="text-[10px] bg-slate-200 px-1.5 py-0.2 rounded text-slate-700 font-medium">Current</span>}
               </div>
               {idx > 0 && (
                 <button
                   onClick={() => handleRevokeDevice(device)}
-                  className="text-rose-600 hover:text-rose-800 text-[11px] font-semibold"
+                  className="text-slate-600 hover:text-slate-950 text-[11px] font-semibold"
                 >
                   Revoke
                 </button>
@@ -84,7 +84,7 @@ export default function SecurityCenter() {
             <span className="font-bold text-slate-900 text-sm font-mono">{activeCustomer.typicalHours || '08:00-23:00'}</span>
           </div>
           <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 col-span-2">
-            <span className="text-[10px] text-slate-500 uppercase font-semibold block">Home Territory</span>
+            <span className="text-[10px] text-slate-500 uppercase font-semibold block">Home Location</span>
             <span className="font-bold text-slate-900 text-sm">{activeCustomer.usualLocation || 'Bangalore, IN'}</span>
           </div>
         </div>
@@ -92,15 +92,15 @@ export default function SecurityCenter() {
 
       {/* Security Preferences */}
       <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-card space-y-3">
-        <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Biometric & Step-Up Preferences</h4>
+        <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Security Preferences</h4>
         <div className="flex items-center justify-between text-xs">
           <div>
             <p className="font-semibold text-slate-800">Biometric Prompt for Anomaly</p>
-            <p className="text-[11px] text-slate-500">Ask for Fingerprint/FaceID on elevated risk</p>
+            <p className="text-[11px] text-slate-500">Ask for Fingerprint/FaceID on elevated variance</p>
           </div>
           <button
             onClick={() => setBiometricEnabled(!biometricEnabled)}
-            className={`w-11 h-6 rounded-full transition-colors p-0.5 ${biometricEnabled ? 'bg-blue-600' : 'bg-slate-300'}`}
+            className={`w-11 h-6 rounded-full transition-colors p-0.5 ${biometricEnabled ? 'bg-slate-900' : 'bg-slate-300'}`}
           >
             <div className={`w-5 h-5 rounded-full bg-white transition-transform shadow-xs ${biometricEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
           </button>

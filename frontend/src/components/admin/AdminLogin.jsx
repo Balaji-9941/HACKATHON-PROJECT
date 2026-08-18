@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Shield, Lock, User, ArrowRight, ShieldCheck, ArrowLeft } from 'lucide-react';
+import { Shield, Lock, User, ArrowRight, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
-export default function AdminLogin({ onBackToConsumer }) {
+export default function AdminLogin({ onLoginSuccess }) {
   const { login } = useAuth();
   const [username, setUsername] = useState('analyst1');
   const [password, setPassword] = useState('password123');
@@ -10,66 +10,71 @@ export default function AdminLogin({ onBackToConsumer }) {
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
-    e?.preventDefault();
+    e.preventDefault();
     setError('');
     setLoading(true);
     try {
       await login(username, password);
+      if (onLoginSuccess) onLoginSuccess();
     } catch (err) {
-      setError(err.message || 'Authentication failed');
+      setError(err.message || 'Invalid credentials');
     } finally {
       setLoading(false);
     }
   };
 
-  const quickLogin = (user) => {
+  const handleQuickDemo = (user, pass) => {
     setUsername(user);
-    setPassword('password123');
-    login(user, 'password123').catch(err => setError(err.message));
+    setPassword(pass);
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 text-slate-900">
-      <div className="w-full max-w-md rounded-2xl bg-white border border-slate-200/80 p-8 shadow-xl space-y-6">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-card p-8 space-y-6">
+        {/* Header */}
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center mx-auto text-blue-600 shadow-sm">
+          <div className="w-12 h-12 rounded-xl bg-slate-900 text-white flex items-center justify-center mx-auto shadow-xs">
             <Shield className="w-6 h-6" />
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900">PayTelemetry SOC Portal</h1>
-          <p className="text-xs text-slate-500 font-medium">Enterprise Real-Time Fraud Operations & Triage</p>
+          <h1 className="text-xl font-bold text-slate-950 tracking-tight">PayTelemetry SOC</h1>
+          <p className="text-xs text-slate-600 font-medium">Enterprise Security Operations & Fraud Intelligence</p>
         </div>
 
         {error && (
-          <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 text-center font-medium">
-            {error}
+          <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center space-x-2">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{error}</span>
           </div>
         )}
 
+        {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700">Analyst Identifier</label>
+            <label className="text-xs font-semibold text-slate-800">Operator Username</label>
             <div className="relative">
-              <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+              <User className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition"
+                className="w-full pl-9 pr-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
+                placeholder="analyst1"
               />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700">Password</label>
+            <label className="text-xs font-semibold text-slate-800">Password</label>
             <div className="relative">
-              <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+              <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition"
+                className="w-full pl-9 pr-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
+                placeholder="••••••••••••"
               />
             </div>
           </div>
@@ -77,42 +82,36 @@ export default function AdminLogin({ onBackToConsumer }) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold text-xs shadow-sm transition flex items-center justify-center space-x-2"
+            className="w-full py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs transition shadow-xs flex items-center justify-center space-x-1.5 active:scale-98"
           >
-            <span>{loading ? 'Verifying credentials...' : 'Sign In to SOC Console'}</span>
-            <ArrowRight className="w-4 h-4" />
+            <span>{loading ? 'Authenticating...' : 'Sign In to Console'}</span>
+            <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </form>
 
-        {/* Demo Fast Sign-in */}
-        <div className="space-y-2 pt-2 border-t border-slate-100">
-          <p className="text-[11px] text-slate-500 text-center font-medium">Demo Quick Sign-In:</p>
+        {/* Demo Roles Quick Fill */}
+        <div className="pt-4 border-t border-slate-100 space-y-2">
+          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-center">Demo Quick Select</p>
           <div className="grid grid-cols-3 gap-2">
-            {[
-              { id: 'analyst1', role: 'Analyst' },
-              { id: 'senior1', role: 'Lead Senior' },
-              { id: 'admin1', role: 'SOC Admin' }
-            ].map(inv => (
-              <button
-                key={inv.id}
-                onClick={() => quickLogin(inv.id)}
-                className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-center text-xs text-slate-700 hover:text-slate-900 transition font-medium"
-              >
-                <span className="block font-bold text-[11px] text-slate-900">{inv.id}</span>
-                <span className="text-[10px] text-slate-500">{inv.role}</span>
-              </button>
-            ))}
+            <button
+              onClick={() => handleQuickDemo('analyst1', 'password123')}
+              className="py-1.5 px-2 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-[11px] font-medium text-slate-700 transition"
+            >
+              L1 Analyst
+            </button>
+            <button
+              onClick={() => handleQuickDemo('senior1', 'password123')}
+              className="py-1.5 px-2 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-[11px] font-medium text-slate-700 transition"
+            >
+              L2 Senior
+            </button>
+            <button
+              onClick={() => handleQuickDemo('admin1', 'password123')}
+              className="py-1.5 px-2 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-[11px] font-medium text-slate-700 transition"
+            >
+              SOC Admin
+            </button>
           </div>
-        </div>
-
-        <div className="text-center pt-2">
-          <button
-            onClick={onBackToConsumer}
-            className="text-xs text-slate-500 hover:text-slate-800 font-medium inline-flex items-center space-x-1 transition"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Back to Consumer Application</span>
-          </button>
         </div>
       </div>
     </div>

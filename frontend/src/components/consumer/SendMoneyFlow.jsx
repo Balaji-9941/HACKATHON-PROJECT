@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, User, Store, ArrowLeft, Shield } from 'lucide-react';
+import { Search, ArrowLeft } from 'lucide-react';
 import { fetchAPI } from '../../utils/api';
 import { useCustomer } from '../../context/CustomerContext';
 import AmountInput from './AmountInput';
@@ -10,7 +10,7 @@ import PaymentReceipt from './PaymentReceipt';
 export default function SendMoneyFlow({ initialRecipient = null, onClose, onPaymentComplete }) {
   const { activeCustomer, refreshCustomer, merchants } = useCustomer();
 
-  const [step, setStep] = useState(initialRecipient ? 'amount' : 'recipient'); // 'recipient', 'amount', 'review', 'receipt'
+  const [step, setStep] = useState(initialRecipient ? 'amount' : 'recipient');
   const [recipient, setRecipient] = useState(initialRecipient || null);
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
@@ -22,7 +22,6 @@ export default function SendMoneyFlow({ initialRecipient = null, onClose, onPaym
   const [isStepUpOpen, setIsStepUpOpen] = useState(false);
   const [completedTransaction, setCompletedTransaction] = useState(null);
 
-  // Debounced Pre-Check Call on amount change
   useEffect(() => {
     const numAmount = Number(amount);
     if (!numAmount || numAmount <= 0 || !recipient || !activeCustomer) {
@@ -43,8 +42,8 @@ export default function SendMoneyFlow({ initialRecipient = null, onClose, onPaym
             location: activeCustomer.usualLocation,
             deviceId: activeCustomer.knownDevices?.[0] || 'dev-pixel-8',
             deviceName: 'Pixel-8-Pro',
-            merchantCategory: recipient.category || 'peer_to_peer'
-          })
+            merchantCategory: recipient.category || 'peer_to_peer',
+          }),
         });
         setPreCheckAssessment(data.riskAssessment);
       } catch (err) {
@@ -69,7 +68,6 @@ export default function SendMoneyFlow({ initialRecipient = null, onClose, onPaym
   const handleConfirmPayment = async () => {
     if (!preCheckAssessment) return;
 
-    // Graduated Friction: Check if High (71-85) or Critical (86-100) requires Step-Up PIN Auth
     if (['stepup', 'stepup_alert'].includes(preCheckAssessment.userFrictionLevel)) {
       setIsStepUpOpen(true);
       return;
@@ -94,8 +92,8 @@ export default function SendMoneyFlow({ initialRecipient = null, onClose, onPaym
           deviceName: 'Pixel-8-Pro',
           note,
           flowSource: 'consumer',
-          userAcknowledgedAt: stepUpData?.verifiedAt || null
-        })
+          userAcknowledgedAt: stepUpData?.verifiedAt || null,
+        }),
       });
 
       setCompletedTransaction(res.transaction);
@@ -110,14 +108,16 @@ export default function SendMoneyFlow({ initialRecipient = null, onClose, onPaym
     }
   };
 
-  const filteredContacts = (activeCustomer?.savedContacts || []).filter(c =>
-    c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    c.upiId.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredContacts = (activeCustomer?.savedContacts || []).filter(
+    (c) =>
+      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.upiId.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredMerchants = (merchants || []).filter(m =>
-    m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    m.upiId.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredMerchants = (merchants || []).filter(
+    (m) =>
+      m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      m.upiId.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -140,7 +140,7 @@ export default function SendMoneyFlow({ initialRecipient = null, onClose, onPaym
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Enter name, UPI ID, or phone..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-xs"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 shadow-xs"
             />
           </div>
 
@@ -148,10 +148,10 @@ export default function SendMoneyFlow({ initialRecipient = null, onClose, onPaym
           {searchQuery.includes('@') && (
             <button
               onClick={() => handleSelectRecipient({ name: searchQuery, upiId: searchQuery, category: 'peer_to_peer' })}
-              className="w-full p-3 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-between text-xs text-blue-900 hover:bg-blue-100 transition font-medium"
+              className="w-full p-3 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-between text-xs text-slate-900 hover:bg-slate-200 transition font-medium"
             >
               <span>Pay to <strong>{searchQuery}</strong></span>
-              <span className="font-bold text-blue-700">Select →</span>
+              <span className="font-bold text-slate-950">Select →</span>
             </button>
           )}
 
@@ -163,9 +163,9 @@ export default function SendMoneyFlow({ initialRecipient = null, onClose, onPaym
                 <button
                   key={idx}
                   onClick={() => handleSelectRecipient(c)}
-                  className="w-full p-3 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/80 flex items-center space-x-3 transition group text-left shadow-xs"
+                  className="w-full p-3 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 flex items-center space-x-3 transition group text-left shadow-card"
                 >
-                  <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center text-xs font-bold text-slate-800 group-hover:border-blue-600 transition">
+                  <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center text-xs font-bold text-slate-800 group-hover:border-slate-900 transition">
                     {c.avatar && c.avatar.startsWith('http') ? (
                       <img src={c.avatar} alt={c.name} className="w-full h-full object-cover" />
                     ) : (
@@ -173,7 +173,7 @@ export default function SendMoneyFlow({ initialRecipient = null, onClose, onPaym
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-slate-900 truncate group-hover:text-blue-700 transition">{c.name}</p>
+                    <p className="text-xs font-bold text-slate-900 truncate group-hover:underline transition">{c.name}</p>
                     <p className="text-[11px] text-slate-500 font-mono truncate">{c.upiId}</p>
                   </div>
                 </button>
@@ -189,7 +189,7 @@ export default function SendMoneyFlow({ initialRecipient = null, onClose, onPaym
                 <button
                   key={idx}
                   onClick={() => handleSelectRecipient(m)}
-                  className="w-full p-3 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/80 flex items-center space-x-3 transition group text-left shadow-xs"
+                  className="w-full p-3 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 flex items-center space-x-3 transition group text-left shadow-card"
                 >
                   <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-base">
                     <span>{m.logo || '🏬'}</span>
@@ -197,7 +197,7 @@ export default function SendMoneyFlow({ initialRecipient = null, onClose, onPaym
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center space-x-1.5">
                       <p className="text-xs font-bold text-slate-900 truncate">{m.name}</p>
-                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 font-mono font-medium">Tier {m.riskTier}</span>
+                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 font-mono font-medium">Tier {m.riskTier}</span>
                     </div>
                     <p className="text-[11px] text-slate-500 font-mono truncate">{m.upiId}</p>
                   </div>
@@ -241,7 +241,7 @@ export default function SendMoneyFlow({ initialRecipient = null, onClose, onPaym
         />
       )}
 
-      {/* High / Critical Step-Up PIN Modal */}
+      {/* Step-Up PIN Modal */}
       <StepUpAuth
         isOpen={isStepUpOpen}
         assessment={preCheckAssessment}

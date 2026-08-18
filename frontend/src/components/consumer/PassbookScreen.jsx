@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, ArrowUpRight, ArrowDownLeft, ShieldAlert, ChevronRight } from 'lucide-react';
+import { Search, ArrowUpRight, ChevronRight } from 'lucide-react';
 import { fetchAPI, formatCurrency, getRiskColor } from '../../utils/api';
 import { useCustomer } from '../../context/CustomerContext';
 import TransactionDetail from './TransactionDetail';
@@ -7,7 +7,7 @@ import TransactionDetail from './TransactionDetail';
 export default function PassbookScreen({ onBack }) {
   const { activeCustomer } = useCustomer();
   const [transactions, setTransactions] = useState([]);
-  const [filterTab, setFilterTab] = useState('ALL'); // 'ALL', 'RISKY'
+  const [filterTab, setFilterTab] = useState('ALL');
   const [search, setSearch] = useState('');
   const [selectedTxn, setSelectedTxn] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -35,16 +35,19 @@ export default function PassbookScreen({ onBack }) {
         transaction={selectedTxn}
         onBack={() => setSelectedTxn(null)}
         onAcknowledge={(id) => {
-          setTransactions(prev => prev.map(t => t.transactionId === id ? { ...t, userAcknowledgedAt: new Date() } : t));
+          setTransactions((prev) =>
+            prev.map((t) => (t.transactionId === id ? { ...t, userAcknowledgedAt: new Date() } : t))
+          );
         }}
       />
     );
   }
 
-  const filtered = transactions.filter(t => {
-    const matchSearch = t.recipientName?.toLowerCase().includes(search.toLowerCase()) ||
-                        t.recipientUpiId?.toLowerCase().includes(search.toLowerCase()) ||
-                        t.transactionId?.toLowerCase().includes(search.toLowerCase());
+  const filtered = transactions.filter((t) => {
+    const matchSearch =
+      t.recipientName?.toLowerCase().includes(search.toLowerCase()) ||
+      t.recipientUpiId?.toLowerCase().includes(search.toLowerCase()) ||
+      t.transactionId?.toLowerCase().includes(search.toLowerCase());
 
     if (!matchSearch) return false;
 
@@ -59,7 +62,7 @@ export default function PassbookScreen({ onBack }) {
         <span className="text-xs font-mono text-slate-500 font-medium">{filtered.length} entries</span>
       </div>
 
-      {/* Search & Filter Bar */}
+      {/* Search Bar */}
       <div className="relative">
         <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
         <input
@@ -67,21 +70,21 @@ export default function PassbookScreen({ onBack }) {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search transactions..."
-          className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-xs"
+          className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 shadow-xs"
         />
       </div>
 
       {/* Tabs */}
       <div className="flex space-x-1 p-1 rounded-xl bg-slate-100 border border-slate-200 text-xs">
-        {['ALL', 'RISKY'].map(tab => (
+        {['ALL', 'RISKY'].map((tab) => (
           <button
             key={tab}
             onClick={() => setFilterTab(tab)}
             className={`flex-1 py-1.5 rounded-lg font-medium transition ${
-              filterTab === tab ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
+              filterTab === tab ? 'bg-white text-slate-950 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            {tab === 'RISKY' ? '⚠️ Elevated Risk' : 'All Transactions'}
+            {tab === 'RISKY' ? 'Elevated Anomaly' : 'All Transactions'}
           </button>
         ))}
       </div>
@@ -93,37 +96,38 @@ export default function PassbookScreen({ onBack }) {
         ) : filtered.length === 0 ? (
           <div className="text-center py-8 text-xs text-slate-500 font-medium">No matching transactions found</div>
         ) : (
-          filtered.map(txn => {
+          filtered.map((txn) => {
             const risk = getRiskColor(txn.alertSeverity);
             return (
               <button
                 key={txn.transactionId}
                 onClick={() => setSelectedTxn(txn)}
-                className="w-full p-3.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/80 shadow-xs hover:shadow-card flex items-center justify-between transition group text-left"
+                className="w-full p-3.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 shadow-card flex items-center justify-between transition group text-left"
               >
                 <div className="flex items-center space-x-3 min-w-0">
-                  <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 border border-slate-200">
-                    <ArrowUpRight className="w-5 h-5 text-rose-600" />
+                  <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700 border border-slate-200">
+                    <ArrowUpRight className="w-4 h-4" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-slate-900 truncate group-hover:text-blue-700 transition">
+                    <p className="text-xs font-bold text-slate-900 truncate group-hover:underline">
                       {txn.recipientName || txn.recipientUpiId}
                     </p>
-                    <p className="text-[11px] text-slate-500">
-                      {new Date(txn.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    <p className="text-[11px] text-slate-500 font-medium">
+                      {new Date(txn.timestamp).toLocaleDateString(undefined, {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center space-x-2 shrink-0">
                   <div className="text-right">
-                    <p className="text-xs font-extrabold text-slate-900 font-mono">-{formatCurrency(txn.amount)}</p>
+                    <p className="text-xs font-extrabold text-slate-950 font-mono">-{formatCurrency(txn.amount)}</p>
                     <div className="flex items-center justify-end space-x-1 mt-0.5">
-                      <span className={`w-1.5 h-1.5 rounded-full ${
-                        txn.totalRiskScore <= 30 ? 'bg-emerald-600' :
-                        txn.totalRiskScore <= 50 ? 'bg-yellow-500' :
-                        txn.totalRiskScore <= 70 ? 'bg-amber-500' : 'bg-rose-600'
-                      }`} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-slate-900" />
                       <span className="text-[10px] font-mono text-slate-500 font-medium">{txn.totalRiskScore}</span>
                     </div>
                   </div>

@@ -1,76 +1,87 @@
 const API_BASE = '/api';
 
-export const fetchAPI = async (endpoint, options = {}) => {
+export async function fetchAPI(endpoint, options = {}) {
   const token = localStorage.getItem('paytelemetry_token');
   const headers = {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...(options.headers || {})
+    ...options.headers,
   };
 
   const response = await fetch(`${API_BASE}${endpoint}`, {
     ...options,
-    headers
+    headers,
   });
 
   if (!response.ok) {
     const errData = await response.json().catch(() => ({}));
-    throw new Error(errData.error || errData.message || `HTTP ${response.status}`);
+    throw new Error(errData.error || `HTTP error ${response.status}`);
   }
 
   return response.json();
-};
+}
 
-export const formatCurrency = (amount) => {
+export function formatCurrency(val) {
+  if (typeof val !== 'number') val = Number(val) || 0;
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: 'INR',
-    maximumFractionDigits: 0
-  }).format(amount || 0);
-};
+    maximumFractionDigits: 0,
+  }).format(val);
+}
 
-export const getRiskColor = (severity) => {
+// Professional, restrained status & risk tokens
+export function getRiskColor(severity) {
   switch (severity?.toLowerCase()) {
     case 'critical':
       return {
-        text: 'text-red-700',
-        bg: 'bg-red-50',
-        border: 'border-red-200',
-        badge: 'bg-red-100 text-red-800 border border-red-300 font-bold',
-        dot: 'bg-red-600'
+        bg: 'bg-rose-50/70',
+        border: 'border-rose-200',
+        text: 'text-rose-900',
+        badge: 'bg-rose-50 text-rose-800 border border-rose-200/80 font-bold',
+        dot: 'bg-rose-600',
+        bar: 'bg-rose-600',
+        label: 'Critical Anomaly'
       };
     case 'high':
       return {
-        text: 'text-rose-700',
-        bg: 'bg-rose-50',
-        border: 'border-rose-200',
-        badge: 'bg-rose-100 text-rose-800 border border-rose-300 font-bold',
-        dot: 'bg-rose-600'
+        bg: 'bg-amber-50/70',
+        border: 'border-amber-200',
+        text: 'text-amber-900',
+        badge: 'bg-amber-50 text-amber-900 border border-amber-200/80 font-bold',
+        dot: 'bg-amber-600',
+        bar: 'bg-amber-600',
+        label: 'High Variance'
       };
     case 'medium':
       return {
-        text: 'text-amber-800',
-        bg: 'bg-amber-50',
-        border: 'border-amber-200',
-        badge: 'bg-amber-100 text-amber-900 border border-amber-300 font-bold',
-        dot: 'bg-amber-500'
+        bg: 'bg-slate-50',
+        border: 'border-slate-200',
+        text: 'text-slate-900',
+        badge: 'bg-slate-100 text-slate-800 border border-slate-200 font-semibold',
+        dot: 'bg-slate-600',
+        bar: 'bg-slate-600',
+        label: 'Medium Risk'
       };
     case 'low':
       return {
-        text: 'text-yellow-800',
-        bg: 'bg-yellow-50',
-        border: 'border-yellow-200',
-        badge: 'bg-yellow-100 text-yellow-900 border border-yellow-300 font-semibold',
-        dot: 'bg-yellow-500'
+        bg: 'bg-slate-50',
+        border: 'border-slate-200',
+        text: 'text-slate-800',
+        badge: 'bg-slate-100 text-slate-700 border border-slate-200 font-medium',
+        dot: 'bg-slate-400',
+        bar: 'bg-slate-400',
+        label: 'Low Risk'
       };
-    case 'none':
     default:
       return {
-        text: 'text-emerald-700',
-        bg: 'bg-emerald-50',
-        border: 'border-emerald-200',
-        badge: 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-semibold',
-        dot: 'bg-emerald-500'
+        bg: 'bg-white',
+        border: 'border-slate-200',
+        text: 'text-slate-700',
+        badge: 'bg-slate-100 text-slate-700 border border-slate-200 font-medium',
+        dot: 'bg-emerald-600',
+        bar: 'bg-slate-900',
+        label: 'Normal'
       };
   }
-};
+}

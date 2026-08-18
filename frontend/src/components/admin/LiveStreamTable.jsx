@@ -1,238 +1,166 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, ArrowUpRight, Shield, Zap, Sparkles, ChevronRight, Activity } from 'lucide-react';
+import { Search, Filter, ShieldAlert, ArrowUpRight, CheckCircle2, ChevronRight, Pause, Play } from 'lucide-react';
 import { fetchAPI, formatCurrency, getRiskColor } from '../../utils/api';
 import { useSocket } from '../../context/SocketContext';
 
 export default function LiveStreamTable({ onSelectTransaction }) {
-  const { latestTransaction, tier2Update } = useSocket();
+  const { latestTransaction } = useSocket();
   const [transactions, setTransactions] = useState([]);
-  const [severityFilter, setSeverityFilter] = useState('ALL');
-  const [sourceFilter, setSourceFilter] = useState('ALL');
+  const [isPaused, setIsPaused] = useState(false);
+  const [filterSeverity, setFilterSeverity] = useState('ALL');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
 
-  // Initial load
+  const loadRecent = async () => {
+    try {
+      setLoading(true);
+      const data = await fetchAPI('/transactions?limit=60');
+      setTransactions(data.transactions || []);
+    } catch (err) {
+      console.error('[LiveStreamTable] Error:', err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadInit = async () => {
-      try {
-        setLoading(true);
-        const data = await fetchAPI('/transactions?limit=60');
-        setTransactions(data.transactions || []);
-      } catch (err) {
-        console.error('[LiveStreamTable] Init error:', err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadInit();
+    loadRecent();
   }, []);
 
-  // Real-time new transaction prepend from Socket.io
+  // Prepend real-time stream packet from Socket.io
   useEffect(() => {
-    if (!latestTransaction) return;
-    setTransactions(prev => {
-      const exists = prev.some(t => t.transactionId === latestTransaction.transactionId);
-      if (exists) return prev;
-      return [{ ...latestTransaction, isNewPulse: true }, ...prev.slice(0, 100)];
-    });
-  }, [latestTransaction]);
+    if (!latestTransaction || isPaused) return;
+    setTransactions((prev) => [latestTransaction, ...prev.slice(0, 75)]);
+  }, [latestTransaction, isPaused]);
 
-  // Real-time Tier 2 score updates from Socket.io
-  useEffect(() => {
-    if (!tier2Update) return;
-    setTransactions(prev => prev.map(t => {
-      if (t.transactionId === tier2Update.transactionId) {
-        return {
-          ...t,
-          modelTier: tier2Update.modelTier,
-          totalRiskScore: tier2Update.totalRiskScore,
-          mlProbability: tier2Update.mlProbability,
-          shapValues: tier2Update.shapValues,
-          modelVersion: tier2Update.modelVersion,
-          aiNarrative: tier2Update.aiNarrative
-        };
-      }
-      return t;
-    }));
-  }, [tier2Update]);
-
-  const filtered = transactions.filter(t => {
-    const matchSearch = t.transactionId?.toLowerCase().includes(search.toLowerCase()) ||
-                        t.customerId?.toLowerCase().includes(search.toLowerCase()) ||
-                        t.recipientName?.toLowerCase().includes(search.toLowerCase()) ||
-                        t.recipientUpiId?.toLowerCase().includes(search.toLowerCase());
+  const filtered = transactions.filter((t) => {
+    const matchSearch =
+      t.transactionId?.toLowerCase().includes(search.toLowerCase()) ||
+      t.customerId?.toLowerCase().includes(search.toLowerCase()) ||
+      t.recipientName?.toLowerCase().includes(search.toLowerCase()) ||
+      t.recipientUpiId?.toLowerCase().includes(search.toLowerCase());
 
     if (!matchSearch) return false;
-
-    if (severityFilter !== 'ALL' && t.alertSeverity !== severityFilter.toLowerCase()) {
-      return false;
-    }
-
-    if (sourceFilter !== 'ALL' && t.flowSource !== sourceFilter) {
-      return false;
-    }
-
-    return true;
+    if (filterSeverity === 'ALL') return true;
+    return t.alertSeverity?.toLowerCase() === filterSeverity.toLowerCase();
   });
 
   return (
     <div className="rounded-xl bg-white border border-slate-200 shadow-card p-5 space-y-4">
-      {/* Header & Live Stream Controls */}
+      {/* Header & Controls */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div className="flex items-center space-x-2.5">
-          <div className="relative">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 block animate-ping" />
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 block absolute inset-0" />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
-              <span>Live Payments Telemetry Feed</span>
-              <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
-                Socket.io Active
-              </span>
-            </h3>
-            <p className="text-xs text-slate-500 font-medium">Real-time sub-20ms Tier 1 scoring with asynchronous Tier 2 ML enrichment</p>
-          </div>
+        <div>
+          <h3 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
+            <span>In-Flight Telemetry Event Stream</span>
+            <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-mono text-[10px] border border-slate-200 font-semibold">
+              {filtered.length} Events
+            </span>
+          </h3>
+          <p className="text-xs text-slate-500 font-medium">Real-time evaluated transactions scored across Tier 1 rules and Tier 2 ML</p>
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-          {/* Search */}
-          <div className="relative flex-1 sm:w-52">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search txn / customer..."
-              className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition"
-            />
-          </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Pause / Resume Stream */}
+          <button
+            onClick={() => setIsPaused(!isPaused)}
+            className={`px-2.5 py-1.5 rounded-lg border text-xs font-semibold flex items-center space-x-1.5 transition ${
+              isPaused
+                ? 'bg-slate-900 text-white border-slate-900'
+                : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200'
+            }`}
+          >
+            {isPaused ? <Play className="w-3 h-3 fill-current" /> : <Pause className="w-3 h-3" />}
+            <span>{isPaused ? 'Resume Stream' : 'Freeze View'}</span>
+          </button>
 
-          {/* Severity Filter */}
+          {/* Search Filter */}
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search txn / customer / UPI..."
+            className="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-slate-900"
+          />
+
+          {/* Severity Dropdown */}
           <select
-            value={severityFilter}
-            onChange={(e) => setSeverityFilter(e.target.value)}
-            className="px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-700 font-medium focus:bg-white focus:outline-none focus:border-blue-600"
+            value={filterSeverity}
+            onChange={(e) => setFilterSeverity(e.target.value)}
+            className="px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-700 font-medium focus:bg-white focus:outline-none"
           >
             <option value="ALL">All Severities</option>
-            <option value="critical">Critical (86-100)</option>
-            <option value="high">High (71-85)</option>
-            <option value="medium">Medium (51-70)</option>
-            <option value="low">Low (31-50)</option>
-            <option value="none">Normal (0-30)</option>
-          </select>
-
-          {/* Source Filter */}
-          <select
-            value={sourceFilter}
-            onChange={(e) => setSourceFilter(e.target.value)}
-            className="px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-700 font-medium focus:bg-white focus:outline-none focus:border-blue-600"
-          >
-            <option value="ALL">All Sources</option>
-            <option value="consumer">Consumer App</option>
-            <option value="autoflow_replay">AutoFlow Replay</option>
-            <option value="autoflow_scenario">AutoFlow Scenario</option>
-            <option value="manual_injection">Manual Injection</option>
+            <option value="critical">Critical Anomaly</option>
+            <option value="high">High Variance</option>
+            <option value="medium">Medium Risk</option>
+            <option value="low">Low Risk</option>
+            <option value="normal">Normal (Cleared)</option>
           </select>
         </div>
       </div>
 
-      {/* Stream Table */}
+      {/* High Density Telemetry Table */}
       <div className="overflow-x-auto rounded-lg border border-slate-200">
         <table className="w-full text-left text-xs">
           <thead>
-            <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-semibold text-[11px]">
-              <th className="py-2.5 pl-3">Time</th>
-              <th className="py-2.5">Txn ID / Customer</th>
-              <th className="py-2.5">Counterparty</th>
-              <th className="py-2.5 text-right">Amount</th>
+            <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold text-[11px]">
+              <th className="py-2.5 pl-3">Transaction ID</th>
+              <th className="py-2.5">Payer Account</th>
+              <th className="py-2.5">Recipient / Merchant</th>
+              <th className="py-2.5 text-right">Amount (INR)</th>
               <th className="py-2.5 text-center">Score</th>
               <th className="py-2.5">Severity</th>
-              <th className="py-2.5">Model Tier</th>
-              <th className="py-2.5">Source</th>
-              <th className="py-2.5 text-right pr-3">Action</th>
+              <th className="py-2.5">Friction Policy</th>
+              <th className="py-2.5">Engine Tier</th>
+              <th className="py-2.5 text-right pr-3">Latency</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 bg-white">
             {loading ? (
               <tr>
-                <td colSpan={9} className="py-8 text-center text-slate-500 font-medium">
-                  Connecting to live telemetry pipe...
-                </td>
+                <td colSpan={9} className="py-8 text-center text-slate-500 font-medium">Loading telemetry feed...</td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={9} className="py-8 text-center text-slate-500 font-medium">
-                  No matching transactions in current stream buffer.
-                </td>
+                <td colSpan={9} className="py-8 text-center text-slate-500 font-medium">No matching transactions in current buffer.</td>
               </tr>
             ) : (
-              filtered.map((txn) => {
-                const risk = getRiskColor(txn.alertSeverity);
+              filtered.map((t) => {
+                const risk = getRiskColor(t.alertSeverity);
                 return (
                   <tr
-                    key={txn.transactionId}
-                    onClick={() => onSelectTransaction(txn)}
+                    key={t.transactionId}
+                    onClick={() => onSelectTransaction(t)}
                     className="hover:bg-slate-50 cursor-pointer transition group"
                   >
-                    <td className="py-3 pl-3 font-mono text-[11px] text-slate-500 whitespace-nowrap">
-                      {new Date(txn.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                    <td className="py-2.5 pl-3 font-mono font-bold text-slate-900 group-hover:underline">
+                      {t.transactionId}
                     </td>
-
-                    <td className="py-3 whitespace-nowrap">
-                      <p className="font-mono font-bold text-slate-900 group-hover:text-blue-600 transition">
-                        {txn.transactionId}
-                      </p>
-                      <p className="text-[11px] text-slate-500">{txn.customerId}</p>
+                    <td className="py-2.5 font-mono text-slate-700">
+                      {t.customerId}
                     </td>
-
-                    <td className="py-3 whitespace-nowrap">
-                      <p className="font-medium text-slate-800 truncate max-w-[140px]">
-                        {txn.recipientName || txn.recipientUpiId}
-                      </p>
-                      <p className="text-[10px] text-slate-500 font-mono truncate max-w-[140px]">
-                        {txn.location}
-                      </p>
+                    <td className="py-2.5">
+                      <p className="font-semibold text-slate-900 truncate max-w-[160px]">{t.recipientName || t.recipientUpiId}</p>
+                      <p className="text-[10px] text-slate-500 font-mono truncate max-w-[160px]">{t.recipientUpiId}</p>
                     </td>
-
-                    <td className="py-3 text-right font-extrabold text-slate-900 font-mono whitespace-nowrap">
-                      {formatCurrency(txn.amount)}
+                    <td className="py-2.5 text-right font-mono font-bold text-slate-950">
+                      {formatCurrency(t.amount)}
                     </td>
-
-                    <td className="py-3 text-center whitespace-nowrap">
-                      <span className={`inline-block font-mono font-bold px-2 py-0.5 rounded-md ${risk.bg} ${risk.text} border ${risk.border}`}>
-                        {txn.totalRiskScore}
-                      </span>
+                    <td className="py-2.5 text-center font-mono font-bold text-slate-900">
+                      {t.totalRiskScore}/100
                     </td>
-
-                    <td className="py-3 whitespace-nowrap">
+                    <td className="py-2.5">
                       <span className={`text-[10px] font-mono px-2 py-0.5 rounded-md uppercase ${risk.badge}`}>
-                        {txn.alertSeverity}
+                        {t.alertSeverity}
                       </span>
                     </td>
-
-                    <td className="py-3 whitespace-nowrap">
-                      <span className={`text-[10px] font-mono px-2 py-0.5 rounded-md border ${
-                        txn.modelTier === 2
-                          ? 'bg-blue-50 text-blue-800 border-blue-200 font-semibold'
-                          : 'bg-slate-50 text-slate-600 border-slate-200'
-                      }`}>
-                        {txn.modelTier === 2 ? 'Tier 2 (ML)' : 'Tier 1'}
-                      </span>
+                    <td className="py-2.5 font-mono text-[11px] text-slate-700 capitalize">
+                      {t.userFrictionLevel || 'none'}
                     </td>
-
-                    <td className="py-3 whitespace-nowrap">
-                      <span className="text-[10px] font-mono text-slate-500">
-                        {txn.flowSource}
-                      </span>
+                    <td className="py-2.5 text-[11px] text-slate-600 font-mono">
+                      Tier {t.modelTier || 1}
                     </td>
-
-                    <td className="py-3 text-right pr-3 whitespace-nowrap">
-                      <button className="text-blue-600 hover:text-blue-800 font-semibold text-xs inline-flex items-center space-x-0.5">
-                        <span>Inspect</span>
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </button>
+                    <td className="py-2.5 text-right pr-3 font-mono text-slate-600 font-medium">
+                      {t.latencyMs || 12}ms
                     </td>
                   </tr>
                 );

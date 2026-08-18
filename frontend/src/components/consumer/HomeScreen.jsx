@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowUpRight, Shield, ShieldAlert, Sparkles, ChevronRight, ExternalLink } from 'lucide-react';
+import { ArrowUpRight, Shield, ChevronRight, ExternalLink } from 'lucide-react';
 import { useCustomer } from '../../context/CustomerContext';
 import { fetchAPI, formatCurrency, getRiskColor } from '../../utils/api';
 import BalanceCard from './BalanceCard';
@@ -14,7 +14,7 @@ import TransactionDetail from './TransactionDetail';
 
 export default function HomeScreen({ onSwitchToAdmin }) {
   const { activeCustomer, refreshCustomer, merchants } = useCustomer();
-  const [activeTab, setActiveTab] = useState('home'); // 'home', 'passbook', 'security', 'profile'
+  const [activeTab, setActiveTab] = useState('home');
   const [isSendFlowOpen, setIsSendFlowOpen] = useState(false);
   const [preselectedRecipient, setPreselectedRecipient] = useState(null);
   const [recentTxns, setRecentTxns] = useState([]);
@@ -64,7 +64,9 @@ export default function HomeScreen({ onSwitchToAdmin }) {
           transaction={selectedTxn}
           onBack={() => setSelectedTxn(null)}
           onAcknowledge={(id) => {
-            setRecentTxns(prev => prev.map(t => t.transactionId === id ? { ...t, userAcknowledgedAt: new Date() } : t));
+            setRecentTxns((prev) =>
+              prev.map((t) => (t.transactionId === id ? { ...t, userAcknowledgedAt: new Date() } : t))
+            );
           }}
         />
       </div>
@@ -77,7 +79,7 @@ export default function HomeScreen({ onSwitchToAdmin }) {
         {/* Top Header */}
         <div className="flex items-center justify-between pt-1">
           <div className="flex items-center space-x-2.5">
-            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-blue-600 bg-slate-100 flex items-center justify-center font-bold text-slate-800 shadow-xs">
+            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-slate-900 bg-slate-100 flex items-center justify-center font-bold text-slate-800 shadow-xs">
               {activeCustomer?.avatar && activeCustomer.avatar.startsWith('http') ? (
                 <img src={activeCustomer.avatar} alt={activeCustomer.name} className="w-full h-full object-cover" />
               ) : (
@@ -86,15 +88,15 @@ export default function HomeScreen({ onSwitchToAdmin }) {
             </div>
             <div>
               <p className="text-[11px] text-slate-500 font-medium">Good day,</p>
-              <h2 className="text-sm font-bold text-slate-900 leading-tight">{activeCustomer?.name}</h2>
+              <h2 className="text-sm font-bold text-slate-950 leading-tight">{activeCustomer?.name}</h2>
             </div>
           </div>
 
           <button
             onClick={onSwitchToAdmin}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-xs text-slate-700 hover:text-slate-900 font-semibold transition shadow-xs"
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-xs text-slate-800 font-semibold transition shadow-xs"
           >
-            <Shield className="w-3.5 h-3.5 text-blue-600" />
+            <Shield className="w-3.5 h-3.5 text-slate-700" />
             <span>Investigator Portal</span>
             <ExternalLink className="w-3 h-3 text-slate-400" />
           </button>
@@ -131,7 +133,7 @@ export default function HomeScreen({ onSwitchToAdmin }) {
                 <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Recent Transactions</h3>
                 <button
                   onClick={() => setActiveTab('passbook')}
-                  className="text-xs text-blue-600 hover:text-blue-700 font-semibold"
+                  className="text-xs text-slate-900 hover:underline font-semibold"
                 >
                   View all
                 </button>
@@ -139,7 +141,7 @@ export default function HomeScreen({ onSwitchToAdmin }) {
 
               <div className="space-y-2">
                 {recentTxns.length === 0 ? (
-                  <div className="p-4 rounded-xl bg-white border border-slate-200 text-center text-xs text-slate-500 shadow-xs font-medium">
+                  <div className="p-4 rounded-xl bg-white border border-slate-200 text-center text-xs text-slate-500 shadow-card font-medium">
                     No transactions yet. Tap "Pay UPI ID" to test payment telemetry.
                   </div>
                 ) : (
@@ -149,14 +151,14 @@ export default function HomeScreen({ onSwitchToAdmin }) {
                       <button
                         key={txn.transactionId}
                         onClick={() => setSelectedTxn(txn)}
-                        className="w-full p-3.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/80 shadow-xs hover:shadow-card flex items-center justify-between transition group text-left"
+                        className="w-full p-3.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 shadow-card flex items-center justify-between transition group text-left"
                       >
                         <div className="flex items-center space-x-3 min-w-0">
-                          <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600">
-                            <ArrowUpRight className="w-5 h-5 text-rose-600" />
+                          <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700">
+                            <ArrowUpRight className="w-4 h-4" />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-xs font-bold text-slate-900 truncate group-hover:text-blue-700 transition">
+                            <p className="text-xs font-bold text-slate-900 truncate group-hover:underline transition">
                               {txn.recipientName || txn.recipientUpiId}
                             </p>
                             <p className="text-[11px] text-slate-500 font-medium">
@@ -167,13 +169,9 @@ export default function HomeScreen({ onSwitchToAdmin }) {
 
                         <div className="flex items-center space-x-2 shrink-0">
                           <div className="text-right">
-                            <p className="text-xs font-extrabold text-slate-900 font-mono">-{formatCurrency(txn.amount)}</p>
+                            <p className="text-xs font-extrabold text-slate-950 font-mono">-{formatCurrency(txn.amount)}</p>
                             <div className="flex items-center justify-end space-x-1 mt-0.5">
-                              <span className={`w-1.5 h-1.5 rounded-full ${
-                                txn.totalRiskScore <= 30 ? 'bg-emerald-600' :
-                                txn.totalRiskScore <= 50 ? 'bg-yellow-500' :
-                                txn.totalRiskScore <= 70 ? 'bg-amber-500' : 'bg-rose-600'
-                              }`} />
+                              <span className="w-1.5 h-1.5 rounded-full bg-slate-900" />
                               <span className="text-[10px] font-mono text-slate-500 font-semibold">{txn.totalRiskScore}</span>
                             </div>
                           </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sliders, RefreshCw, CheckCircle2, TrendingUp, Cpu } from 'lucide-react';
+import { Sliders, RefreshCw } from 'lucide-react';
 import { fetchAPI } from '../../utils/api';
 import { useSocket } from '../../context/SocketContext';
 
@@ -15,7 +15,7 @@ export default function AdaptiveThresholdPanel() {
       setLoading(true);
       const [tData, sData] = await Promise.all([
         fetchAPI('/admin/thresholds'),
-        fetchAPI('/admin/performance')
+        fetchAPI('/admin/performance'),
       ]);
       setMetrics(tData);
       setSnapshots(sData || []);
@@ -32,12 +32,12 @@ export default function AdaptiveThresholdPanel() {
 
   useEffect(() => {
     if (!thresholdUpdate) return;
-    setMetrics(prev => ({
+    setMetrics((prev) => ({
       ...prev,
       thresholds: thresholdUpdate.thresholds,
       precision: thresholdUpdate.metrics?.precision || prev?.precision,
       recall: thresholdUpdate.metrics?.recall || prev?.recall,
-      f1: thresholdUpdate.metrics?.f1 || prev?.f1
+      f1: thresholdUpdate.metrics?.f1 || prev?.f1,
     }));
   }, [thresholdUpdate]);
 
@@ -47,7 +47,7 @@ export default function AdaptiveThresholdPanel() {
       const res = await fetchAPI('/admin/thresholds/recalibrate', { method: 'POST' });
       setMetrics(res.metrics);
       if (res.snapshot) {
-        setSnapshots(prev => [res.snapshot, ...prev.slice(0, 15)]);
+        setSnapshots((prev) => [res.snapshot, ...prev.slice(0, 15)]);
       }
     } catch (e) {
       alert(`Recalibration error: ${e.message}`);
@@ -63,7 +63,7 @@ export default function AdaptiveThresholdPanel() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
-            <Sliders className="w-4 h-4 text-blue-600" />
+            <Sliders className="w-4 h-4 text-slate-700" />
             <span>Adaptive Threshold Auto-Tuning Engine</span>
           </h3>
           <p className="text-xs text-slate-500 font-medium">Dynamically optimizes severity cutoffs against live precision & recall trade-offs</p>
@@ -72,7 +72,7 @@ export default function AdaptiveThresholdPanel() {
         <button
           onClick={handleRecalibrate}
           disabled={isRecalibrating}
-          className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold text-xs shadow-sm flex items-center space-x-2 transition"
+          className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-semibold text-xs shadow-xs flex items-center space-x-2 transition"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isRecalibrating ? 'animate-spin' : ''}`} />
           <span>{isRecalibrating ? 'Calibrating F1...' : 'Recalibrate Now'}</span>
@@ -83,28 +83,28 @@ export default function AdaptiveThresholdPanel() {
       <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-card space-y-4">
         <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Current Active Severity Threshold Bands</h4>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
-          <div className="p-3.5 rounded-xl bg-yellow-50/70 border border-yellow-200 space-y-1">
-            <span className="text-[10px] text-yellow-800 block uppercase font-bold">Low (Banner)</span>
-            <span className="text-2xl font-black text-yellow-800 font-mono">0 – {thresholds.low}</span>
-            <span className="text-[10px] text-yellow-700 block font-medium">Subtle UX warning banner</span>
+          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+            <span className="text-[10px] text-slate-500 block uppercase font-bold">Low (Banner)</span>
+            <span className="text-2xl font-black text-slate-950 font-mono">0 – {thresholds.low}</span>
+            <span className="text-[10px] text-slate-500 block font-medium">Subtle UX warning banner</span>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200 space-y-1">
-            <span className="text-[10px] text-amber-800 block uppercase font-bold">Medium (Confirm)</span>
-            <span className="text-2xl font-black text-amber-800 font-mono">{thresholds.low + 1} – {thresholds.high}</span>
-            <span className="text-[10px] text-amber-700 block font-medium">Explicit intent confirmation</span>
+          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+            <span className="text-[10px] text-slate-500 block uppercase font-bold">Medium (Confirm)</span>
+            <span className="text-2xl font-black text-slate-950 font-mono">{thresholds.low + 1} – {thresholds.high}</span>
+            <span className="text-[10px] text-slate-500 block font-medium">Explicit intent confirmation</span>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-rose-50/70 border border-rose-200 space-y-1">
-            <span className="text-[10px] text-rose-800 block uppercase font-bold">High (Step-Up)</span>
-            <span className="text-2xl font-black text-rose-800 font-mono">{thresholds.high + 1} – {thresholds.critical}</span>
-            <span className="text-[10px] text-rose-700 block font-medium">4-Digit PIN challenge</span>
+          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+            <span className="text-[10px] text-slate-500 block uppercase font-bold">High (Step-Up)</span>
+            <span className="text-2xl font-black text-slate-950 font-mono">{thresholds.high + 1} – {thresholds.critical}</span>
+            <span className="text-[10px] text-slate-500 block font-medium">4-Digit PIN challenge</span>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-red-50/70 border border-red-200 space-y-1">
-            <span className="text-[10px] text-red-800 block uppercase font-bold">Critical (Step-Up + SOC)</span>
-            <span className="text-2xl font-black text-red-800 font-mono">{thresholds.critical + 1} – 100</span>
-            <span className="text-[10px] text-red-700 block font-medium">PIN + automated incident alert</span>
+          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+            <span className="text-[10px] text-slate-500 block uppercase font-bold">Critical (Step-Up + SOC)</span>
+            <span className="text-2xl font-black text-slate-950 font-mono">{thresholds.critical + 1} – 100</span>
+            <span className="text-[10px] text-slate-500 block font-medium">PIN + automated incident alert</span>
           </div>
         </div>
       </div>
@@ -115,7 +115,7 @@ export default function AdaptiveThresholdPanel() {
         <div className="overflow-x-auto rounded-lg border border-slate-200">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-semibold text-[11px]">
+              <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold text-[11px]">
                 <th className="py-2.5 pl-3">Timestamp</th>
                 <th className="py-2.5">Precision</th>
                 <th className="py-2.5">Recall</th>
@@ -131,11 +131,11 @@ export default function AdaptiveThresholdPanel() {
                   <td className="py-2.5 pl-3 text-slate-500">
                     {new Date(snap.timestamp).toLocaleTimeString()}
                   </td>
-                  <td className="py-2.5 text-emerald-700 font-bold">{(snap.precision * 100).toFixed(1)}%</td>
-                  <td className="py-2.5 text-blue-700 font-bold">{(snap.recall * 100).toFixed(1)}%</td>
-                  <td className="py-2.5 text-slate-900 font-black">{(snap.f1 * 100).toFixed(1)}%</td>
-                  <td className="py-2.5 text-rose-700 font-bold">{snap.thresholds?.high || 70}</td>
-                  <td className="py-2.5 text-red-700 font-bold">{snap.thresholds?.critical || 85}</td>
+                  <td className="py-2.5 text-slate-900 font-bold">{(snap.precision * 100).toFixed(1)}%</td>
+                  <td className="py-2.5 text-slate-900 font-bold">{(snap.recall * 100).toFixed(1)}%</td>
+                  <td className="py-2.5 text-slate-950 font-black">{(snap.f1 * 100).toFixed(1)}%</td>
+                  <td className="py-2.5 text-slate-700 font-bold">{snap.thresholds?.high || 70}</td>
+                  <td className="py-2.5 text-slate-700 font-bold">{snap.thresholds?.critical || 85}</td>
                   <td className="py-2.5 text-right pr-3 text-slate-500">{snap.sampleSize || 200} txns</td>
                 </tr>
               ))}

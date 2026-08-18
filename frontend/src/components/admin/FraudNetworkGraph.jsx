@@ -4,18 +4,11 @@ import {
   Network,
   RefreshCw,
   AlertTriangle,
-  ShieldCheck,
-  Zap,
   ZoomIn,
   ZoomOut,
   Maximize2,
-  Filter,
-  Eye,
   Activity,
-  Layers,
   ArrowRight,
-  TrendingUp,
-  Sliders,
   DollarSign
 } from 'lucide-react';
 import { fetchAPI, formatCurrency, getRiskColor } from '../../utils/api';
@@ -41,7 +34,7 @@ export default function FraudNetworkGraph({ targetCustomerId = null, onSelectCus
       if (containerRef.current) {
         setDimensions({
           width: containerRef.current.clientWidth || 850,
-          height: 580
+          height: 580,
         });
       }
     };
@@ -75,18 +68,26 @@ export default function FraudNetworkGraph({ targetCustomerId = null, onSelectCus
     let links = [...rawGraphData.links];
 
     if (filterMode === 'FLAGGED') {
-      const flaggedIds = new Set(nodes.filter(n => n.isFlagged).map(n => n.id));
-      nodes = nodes.filter(n => n.isFlagged || links.some(l => (flaggedIds.has(l.source?.id || l.source) && (l.target?.id || l.target) === n.id)));
-      const activeIds = new Set(nodes.map(n => n.id));
-      links = links.filter(l => activeIds.has(l.source?.id || l.source) && activeIds.has(l.target?.id || l.target));
+      const flaggedIds = new Set(nodes.filter((n) => n.isFlagged).map((n) => n.id));
+      nodes = nodes.filter(
+        (n) =>
+          n.isFlagged ||
+          links.some(
+            (l) => flaggedIds.has(l.source?.id || l.source) && (l.target?.id || l.target) === n.id
+          )
+      );
+      const activeIds = new Set(nodes.map((n) => n.id));
+      links = links.filter(
+        (l) => activeIds.has(l.source?.id || l.source) && activeIds.has(l.target?.id || l.target)
+      );
     } else if (filterMode === 'HIGH_VALUE') {
-      links = links.filter(l => (l.value || 0) >= 5000);
+      links = links.filter((l) => (l.value || 0) >= 5000);
       const activeIds = new Set();
-      links.forEach(l => {
+      links.forEach((l) => {
         activeIds.add(l.source?.id || l.source);
         activeIds.add(l.target?.id || l.target);
       });
-      nodes = nodes.filter(n => activeIds.has(n.id));
+      nodes = nodes.filter((n) => activeIds.has(n.id));
     }
 
     return { nodes, links };
@@ -104,7 +105,7 @@ export default function FraudNetworkGraph({ targetCustomerId = null, onSelectCus
       const distance = 400;
       graphRef.current.cameraPosition({
         x: distance * Math.sin(orbitAngleRef.current),
-        y: distance * Math.cos(orbitAngleRef.current)
+        y: distance * Math.cos(orbitAngleRef.current),
       });
       animationFrameRef.current = requestAnimationFrame(orbit);
     };
@@ -115,121 +116,91 @@ export default function FraudNetworkGraph({ targetCustomerId = null, onSelectCus
     };
   }, [isOrbiting]);
 
-  // Custom Node Canvas Painting for Light Theme
-  const paintNode = useCallback((node, ctx, globalScale) => {
-    if (!node || typeof node.x !== 'number' || typeof node.y !== 'number' || !Number.isFinite(node.x) || !Number.isFinite(node.y)) {
-      return;
-    }
+  // Custom Node Canvas Painting for Professional Institutional Theme
+  const paintNode = useCallback(
+    (node, ctx, globalScale) => {
+      if (
+        !node ||
+        typeof node.x !== 'number' ||
+        typeof node.y !== 'number' ||
+        !Number.isFinite(node.x) ||
+        !Number.isFinite(node.y)
+      ) {
+        return;
+      }
 
-    const x = node.x;
-    const y = node.y;
-    const rawVal = Number(node.val);
-    const radius = Number.isFinite(rawVal) && rawVal > 0 ? Math.max(3.5, Math.min(8, rawVal * 0.4)) : 4.5;
+      const x = node.x;
+      const y = node.y;
+      const rawVal = Number(node.val);
+      const radius = Number.isFinite(rawVal) && rawVal > 0 ? Math.max(3.5, Math.min(7.5, rawVal * 0.35)) : 4.5;
 
-    const isSelected = selectedNode?.id === node.id;
-    const isHovered = hoveredNode?.id === node.id;
-    const isMule = Boolean(node.isFlagged && (node.pattern?.includes('Mule') || node.maxRiskScore >= 80));
+      const isSelected = selectedNode?.id === node.id;
+      const isHovered = hoveredNode?.id === node.id;
+      const isMule = Boolean(node.isFlagged && (node.pattern?.includes('Mule') || node.maxRiskScore >= 80));
 
-    try {
-      // 1. Draw outer halo for flagged nodes / selected node
-      if (isMule || isSelected || isHovered) {
-        const pulseTime = Date.now() / 400;
-        const pulseRadius = radius + (isMule ? 4 + Math.sin(pulseTime) * 1.5 : 2.5);
-
-        if (Number.isFinite(pulseRadius) && pulseRadius > radius * 0.8) {
-          const glowGrad = ctx.createRadialGradient(x, y, Math.max(1, radius * 0.8), x, y, pulseRadius);
-          if (isMule) {
-            glowGrad.addColorStop(0, 'rgba(239, 68, 68, 0.45)');
-            glowGrad.addColorStop(1, 'rgba(239, 68, 68, 0)');
-          } else if (isSelected) {
-            glowGrad.addColorStop(0, 'rgba(37, 99, 235, 0.5)');
-            glowGrad.addColorStop(1, 'rgba(37, 99, 235, 0)');
-          } else {
-            glowGrad.addColorStop(0, 'rgba(14, 165, 233, 0.4)');
-            glowGrad.addColorStop(1, 'rgba(14, 165, 233, 0)');
-          }
-
+      try {
+        // Selection / Hover outer ring
+        if (isSelected || isHovered || isMule) {
           ctx.beginPath();
-          ctx.arc(x, y, pulseRadius, 0, 2 * Math.PI, false);
-          ctx.fillStyle = glowGrad;
-          ctx.fill();
+          ctx.arc(x, y, radius + 3, 0, 2 * Math.PI, false);
+          ctx.strokeStyle = isMule ? 'rgba(153, 27, 27, 0.4)' : 'rgba(15, 23, 42, 0.3)';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
         }
+
+        // Node Core - Crisp Solid Charcoal/Slate or Dark Crimson for Mules
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
+        ctx.fillStyle = isMule ? '#991b1b' : (node.maxRiskScore >= 60 ? '#475569' : '#0f172a');
+        ctx.fill();
+
+        // White border line
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      } catch (e) {
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
+        ctx.fillStyle = '#0f172a';
+        ctx.fill();
       }
 
-      // 2. Node Core with Light Theme Radial Gradient
-      const innerR = Math.max(0.5, radius * 0.1);
-      const outerR = Math.max(innerR + 1, radius);
-      const coreGrad = ctx.createRadialGradient(x - radius * 0.3, y - radius * 0.3, innerR, x, y, outerR);
-      
-      if (node.maxRiskScore >= 85 || isMule) {
-        coreGrad.addColorStop(0, '#f87171');
-        coreGrad.addColorStop(0.6, '#dc2626');
-        coreGrad.addColorStop(1, '#991b1b');
-      } else if (node.maxRiskScore >= 60) {
-        coreGrad.addColorStop(0, '#fbbf24');
-        coreGrad.addColorStop(0.6, '#d97706');
-        coreGrad.addColorStop(1, '#92400e');
-      } else if (node.id && String(node.id).startsWith('CUST-')) {
-        coreGrad.addColorStop(0, '#60a5fa');
-        coreGrad.addColorStop(0.6, '#2563eb');
-        coreGrad.addColorStop(1, '#1d4ed8');
-      } else {
-        coreGrad.addColorStop(0, '#34d399');
-        coreGrad.addColorStop(0.6, '#059669');
-        coreGrad.addColorStop(1, '#047857');
-      }
+      // Label rendering
+      try {
+        if (globalScale > 1.3 || isHovered || isSelected || isMule) {
+          const label = String(node.name || node.id || '');
+          if (label) {
+            const scale = Number.isFinite(globalScale) && globalScale > 0 ? globalScale : 1;
+            const fontSize = Math.max(8.5 / scale, 2.5);
+            ctx.font = `600 ${fontSize}px "Plus Jakarta Sans", sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
 
-      ctx.beginPath();
-      ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
-      ctx.fillStyle = coreGrad;
-      ctx.fill();
+            const textWidth = ctx.measureText(label).width;
+            if (Number.isFinite(textWidth)) {
+              // Neutral pill backdrop
+              ctx.fillStyle = '#ffffff';
+              ctx.fillRect(x - textWidth / 2 - 3, y + radius + 2, textWidth + 6, fontSize + 3);
+              ctx.strokeStyle = '#cbd5e1';
+              ctx.lineWidth = 0.5;
+              ctx.strokeRect(x - textWidth / 2 - 3, y + radius + 2, textWidth + 6, fontSize + 3);
 
-      // 3. Node Border Ring (Crisp white border)
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = isSelected ? 2 : 1;
-      ctx.stroke();
-    } catch (e) {
-      ctx.beginPath();
-      ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
-      ctx.fillStyle = isMule ? '#dc2626' : '#2563eb';
-      ctx.fill();
-    }
-
-    // 4. Label rendering with clean light-theme pill
-    try {
-      if (globalScale > 1.3 || isHovered || isSelected || isMule) {
-        const label = String(node.name || node.id || '');
-        if (label) {
-          const scale = Number.isFinite(globalScale) && globalScale > 0 ? globalScale : 1;
-          const fontSize = Math.max(8.5 / scale, 2.5);
-          ctx.font = `600 ${fontSize}px Inter, sans-serif`;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'top';
-
-          const textWidth = ctx.measureText(label).width;
-          if (Number.isFinite(textWidth)) {
-            // White backdrop pill with subtle border
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-            ctx.fillRect(x - textWidth / 2 - 3, y + radius + 2, textWidth + 6, fontSize + 3);
-            ctx.strokeStyle = '#e2e8f0';
-            ctx.lineWidth = 0.5;
-            ctx.strokeRect(x - textWidth / 2 - 3, y + radius + 2, textWidth + 6, fontSize + 3);
-
-            ctx.fillStyle = isMule ? '#b91c1c' : (isSelected ? '#1d4ed8' : '#334155');
-            ctx.fillText(label, x, y + radius + 3.5);
+              ctx.fillStyle = isMule ? '#991b1b' : '#0f172a';
+              ctx.fillText(label, x, y + radius + 3.5);
+            }
           }
         }
+      } catch (err) {
+        // Graceful
       }
-    } catch (err) {
-      // Graceful
-    }
-  }, [selectedNode, hoveredNode]);
+    },
+    [selectedNode, hoveredNode]
+  );
 
-  // Particle color based on link risk
+  // Subtle link particle colors
   const getParticleColor = useCallback((link) => {
-    if (link.avgRisk >= 75 || link.severity === 'critical') return '#dc2626'; // Vivid Red
-    if (link.avgRisk >= 50 || link.severity === 'high') return '#d97706'; // Amber
-    return '#2563eb'; // Royal Blue
+    if (link.avgRisk >= 75 || link.severity === 'critical') return '#991b1b';
+    return '#475569';
   }, []);
 
   const handleZoomIn = () => graphRef.current?.zoom(graphRef.current.zoom() * 1.3, 400);
@@ -241,43 +212,49 @@ export default function FraudNetworkGraph({ targetCustomerId = null, onSelectCus
   }, [rawGraphData]);
 
   const flaggedNodesCount = useMemo(() => {
-    return (rawGraphData.nodes || []).filter(n => n.isFlagged).length;
+    return (rawGraphData.nodes || []).filter((n) => n.isFlagged).length;
   }, [rawGraphData]);
 
   return (
     <div className="space-y-4 animate-fade-in">
-      {/* Top Cyber Stats Strip */}
+      {/* Top Stats Strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
         <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-card space-y-1">
           <div className="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase">
-            <span>Topology Nodes</span>
-            <Network className="w-4 h-4 text-blue-600" />
+            <span>Topology Entities</span>
+            <Network className="w-4 h-4 text-slate-700" />
           </div>
-          <p className="text-xl font-bold text-slate-900 font-mono">{graphData.nodes.length} <span className="text-xs font-normal text-slate-500">active</span></p>
+          <p className="text-xl font-bold text-slate-950 font-mono">
+            {graphData.nodes.length} <span className="text-xs font-normal text-slate-500">nodes</span>
+          </p>
         </div>
 
         <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-card space-y-1">
           <div className="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase">
-            <span>Mule Clusters</span>
-            <AlertTriangle className="w-4 h-4 text-rose-600" />
+            <span>Flagged Clusters</span>
+            <AlertTriangle className="w-4 h-4 text-slate-700" />
           </div>
-          <p className="text-xl font-bold text-rose-700 font-mono">{flaggedNodesCount} <span className="text-xs font-normal text-slate-500">flagged</span></p>
+          <p className="text-xl font-bold text-slate-950 font-mono">
+            {flaggedNodesCount} <span className="text-xs font-normal text-slate-500">flagged</span>
+          </p>
         </div>
 
         <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-card space-y-1">
           <div className="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase">
-            <span>Flow Pathways</span>
-            <Activity className="w-4 h-4 text-emerald-600" />
+            <span>Graph Pathways</span>
+            <Activity className="w-4 h-4 text-slate-700" />
           </div>
-          <p className="text-xl font-bold text-emerald-700 font-mono">{graphData.links.length} <span className="text-xs font-normal text-slate-500">edges</span></p>
+          <p className="text-xl font-bold text-slate-950 font-mono">
+            {graphData.links.length} <span className="text-xs font-normal text-slate-500">edges</span>
+          </p>
         </div>
 
         <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-card space-y-1">
           <div className="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase">
-            <span>In-Flight Volume</span>
-            <DollarSign className="w-4 h-4 text-indigo-600" />
+            <span>Observed Volume</span>
+            <DollarSign className="w-4 h-4 text-slate-700" />
           </div>
-          <p className="text-xl font-bold text-indigo-700 font-mono">{formatCurrency(totalVolume)}</p>
+          <p className="text-xl font-bold text-slate-950 font-mono">{formatCurrency(totalVolume)}</p>
         </div>
       </div>
 
@@ -286,26 +263,26 @@ export default function FraudNetworkGraph({ targetCustomerId = null, onSelectCus
         {/* Force Graph Interactive Window */}
         <div
           ref={containerRef}
-          className="lg:col-span-3 rounded-xl bg-slate-50/80 border border-slate-200 relative overflow-hidden shadow-card h-[580px]"
+          className="lg:col-span-3 rounded-xl bg-slate-50 border border-slate-200 relative overflow-hidden shadow-card h-[580px]"
         >
-          {/* Subtle Light Grid Pattern */}
-          <div className="absolute inset-0 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:24px_24px] opacity-60 pointer-events-none" />
+          {/* Subtle Grid Pattern */}
+          <div className="absolute inset-0 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:24px_24px] opacity-40 pointer-events-none" />
 
           {/* Floating Top Control HUD */}
           <div className="absolute top-3 left-3 right-3 flex flex-wrap items-center justify-between gap-2 z-10 pointer-events-none">
             {/* Filter Toggle Pills */}
-            <div className="flex items-center space-x-1 p-1 rounded-lg bg-white/95 backdrop-blur-md border border-slate-200 pointer-events-auto shadow-sm text-xs">
+            <div className="flex items-center space-x-1 p-1 rounded-lg bg-white border border-slate-200 pointer-events-auto shadow-xs text-xs">
               {[
                 { id: 'ALL', label: 'All Entities' },
-                { id: 'FLAGGED', label: '🚨 Flagged Mules Only' },
-                { id: 'HIGH_VALUE', label: '💎 High Value (>₹5k)' }
-              ].map(f => (
+                { id: 'FLAGGED', label: 'Flagged Mules' },
+                { id: 'HIGH_VALUE', label: 'High Value (>₹5k)' },
+              ].map((f) => (
                 <button
                   key={f.id}
                   onClick={() => setFilterMode(f.id)}
                   className={`px-2.5 py-1 rounded-md font-medium transition ${
                     filterMode === f.id
-                      ? 'bg-blue-600 text-white font-bold shadow-xs'
+                      ? 'bg-slate-900 text-white font-bold shadow-xs'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                   }`}
                 >
@@ -314,12 +291,14 @@ export default function FraudNetworkGraph({ targetCustomerId = null, onSelectCus
               ))}
             </div>
 
-            {/* Quick Actions HUD */}
-            <div className="flex items-center space-x-1 p-1 rounded-lg bg-white/95 backdrop-blur-md border border-slate-200 pointer-events-auto shadow-sm">
+            {/* Actions HUD */}
+            <div className="flex items-center space-x-1 p-1 rounded-lg bg-white border border-slate-200 pointer-events-auto shadow-xs">
               <button
                 onClick={() => setIsOrbiting(!isOrbiting)}
                 className={`p-1.5 rounded-md text-xs font-semibold flex items-center space-x-1 transition ${
-                  isOrbiting ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  isOrbiting
+                    ? 'bg-slate-900 text-white'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                 }`}
                 title="Auto-Orbit Camera"
               >
@@ -353,7 +332,7 @@ export default function FraudNetworkGraph({ targetCustomerId = null, onSelectCus
 
               <button
                 onClick={loadGraph}
-                className="p-1.5 rounded-md text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition"
+                className="p-1.5 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition"
                 title="Reload Topology"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
@@ -363,9 +342,9 @@ export default function FraudNetworkGraph({ targetCustomerId = null, onSelectCus
 
           {/* Force Graph Renderer */}
           {loading ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center space-y-2 text-xs text-blue-600 font-medium">
-              <div className="w-8 h-8 rounded-full border-2 border-blue-600 border-t-transparent animate-spin" />
-              <p>Simulating force-directed graph physics...</p>
+            <div className="absolute inset-0 flex flex-col items-center justify-center space-y-2 text-xs text-slate-600 font-medium">
+              <div className="w-6 h-6 rounded-full border-2 border-slate-900 border-t-transparent animate-spin" />
+              <p>Simulating entity topology...</p>
             </div>
           ) : graphData.nodes.length === 0 ? (
             <div className="absolute inset-0 flex items-center justify-center text-xs text-slate-500 font-medium">
@@ -382,12 +361,15 @@ export default function FraudNetworkGraph({ targetCustomerId = null, onSelectCus
               nodeCanvasObjectMode={() => 'replace'}
               nodeRelSize={3.5}
               linkCurvature={0.2}
-              linkWidth={(l) => Math.max(0.8, Math.min(2.5, Math.log10(l.value || 100) * 0.7))}
-              linkColor={(l) => l.avgRisk >= 75 ? 'rgba(220, 38, 38, 0.4)' : (l.avgRisk >= 50 ? 'rgba(217, 119, 6, 0.35)' : 'rgba(37, 99, 235, 0.25)')}
-              // Glowing Animated Transforming Particle Packets Streaming Across Edges
-              linkDirectionalParticles={3}
-              linkDirectionalParticleSpeed={(l) => Math.max(0.006, Math.min(0.018, particleSpeed * (l.value > 10000 ? 1.4 : 1)))}
-              linkDirectionalParticleWidth={(l) => Math.max(1.8, Math.min(3.6, (l.value / 15000) * 2.8))}
+              linkWidth={(l) => Math.max(0.8, Math.min(2.2, Math.log10(l.value || 100) * 0.6))}
+              linkColor={(l) =>
+                l.avgRisk >= 75 ? 'rgba(153, 27, 27, 0.4)' : 'rgba(148, 163, 184, 0.4)'
+              }
+              linkDirectionalParticles={2}
+              linkDirectionalParticleSpeed={(l) =>
+                Math.max(0.005, Math.min(0.015, particleSpeed * (l.value > 10000 ? 1.3 : 1)))
+              }
+              linkDirectionalParticleWidth={(l) => Math.max(1.5, Math.min(3, (l.value / 15000) * 2.2))}
               linkDirectionalParticleColor={getParticleColor}
               onNodeClick={(node) => {
                 setSelectedNode(node);
@@ -403,25 +385,17 @@ export default function FraudNetworkGraph({ targetCustomerId = null, onSelectCus
             />
           )}
 
-          {/* Bottom Floating Legend Bar */}
-          <div className="absolute bottom-3 left-3 p-3 rounded-lg bg-white/95 backdrop-blur-md border border-slate-200 text-[11px] space-y-1.5 shadow-sm z-10 font-medium">
-            <p className="font-bold text-slate-800">Particle Flow Legend:</p>
+          {/* Bottom Legend */}
+          <div className="absolute bottom-3 left-3 p-3 rounded-lg bg-white border border-slate-200 text-[11px] space-y-1.5 shadow-xs z-10 font-medium">
+            <p className="font-bold text-slate-900">Entity Topology Map:</p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-slate-600">
               <div className="flex items-center space-x-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-red-600" />
-                <span>🚨 Mule Hub (Score &gt;80)</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-slate-900" />
+                <span>Standard Account</span>
               </div>
               <div className="flex items-center space-x-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                <span>⚡ Elevated Transfer</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-blue-600" />
-                <span>👤 Verified Account</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-                <span>● In-Flight Money Dot</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-rose-800" />
+                <span>Flagged Mule Hub</span>
               </div>
             </div>
           </div>
@@ -446,72 +420,52 @@ export default function FraudNetworkGraph({ targetCustomerId = null, onSelectCus
               {/* Header Box */}
               <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md ${
-                    selectedNode.isFlagged
-                      ? 'bg-rose-100 text-rose-800 border border-rose-200'
-                      : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                  }`}>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 border border-slate-200">
                     {selectedNode.pattern || 'Normal Node'}
                   </span>
                   <span className="font-mono text-slate-500 text-[11px] font-semibold">{selectedNode.id}</span>
                 </div>
 
-                <h3 className="text-sm font-extrabold text-slate-900">{selectedNode.name}</h3>
+                <h3 className="text-sm font-extrabold text-slate-950">{selectedNode.name}</h3>
                 <p className="text-slate-500 font-mono text-[11px]">{selectedNode.upiId}</p>
               </div>
 
-              {/* Topology Metrics */}
+              {/* Metrics */}
               <div className="grid grid-cols-2 gap-2">
                 <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-0.5">
                   <span className="text-[10px] text-slate-500 uppercase font-semibold">Peak Risk</span>
-                  <p className={`text-lg font-bold font-mono ${
-                    selectedNode.maxRiskScore > 75 ? 'text-rose-700' :
-                    selectedNode.maxRiskScore > 40 ? 'text-amber-700' : 'text-emerald-700'
-                  }`}>
+                  <p className="text-lg font-bold font-mono text-slate-950">
                     {selectedNode.maxRiskScore}/100
                   </p>
                 </div>
 
                 <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-0.5">
                   <span className="text-[10px] text-slate-500 uppercase font-semibold">Flow Volume</span>
-                  <p className="text-sm font-bold text-slate-900 font-mono mt-0.5">
+                  <p className="text-sm font-bold text-slate-950 font-mono mt-0.5">
                     {formatCurrency(selectedNode.volume)}
                   </p>
                 </div>
 
                 <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-0.5">
                   <span className="text-[10px] text-slate-500 uppercase font-semibold">In-Degree</span>
-                  <p className="text-sm font-bold text-blue-700 font-mono">
+                  <p className="text-sm font-bold text-slate-900 font-mono">
                     {selectedNode.inDegree || 0} incoming
                   </p>
                 </div>
 
                 <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-0.5">
                   <span className="text-[10px] text-slate-500 uppercase font-semibold">Out-Degree</span>
-                  <p className="text-sm font-bold text-indigo-700 font-mono">
+                  <p className="text-sm font-bold text-slate-900 font-mono">
                     {selectedNode.outDegree || 0} outgoing
                   </p>
                 </div>
               </div>
 
-              {/* Alert Callout for Mule Ring */}
-              {selectedNode.isFlagged && (
-                <div className="p-3.5 rounded-lg bg-red-50 border border-red-200 text-[11px] text-red-800 leading-relaxed space-y-1">
-                  <p className="font-bold flex items-center space-x-1.5 text-red-900">
-                    <AlertTriangle className="w-3.5 h-3.5 text-red-600" />
-                    <span>Mule Ring Aggregation Detected</span>
-                  </p>
-                  <p>
-                    This account demonstrates disproportionate funneling behavior. Multiple distinct source entities are transmitting funds into this single aggregator node.
-                  </p>
-                </div>
-              )}
-
               {/* Action Buttons */}
               {selectedNode.id?.startsWith('CUST-') && (
                 <button
                   onClick={() => onSelectCustomer && onSelectCustomer(selectedNode.id)}
-                  className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs flex items-center justify-center space-x-1.5 transition shadow-sm"
+                  className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs flex items-center justify-center space-x-1.5 transition shadow-xs"
                 >
                   <span>Filter Graph to this Customer</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -523,7 +477,7 @@ export default function FraudNetworkGraph({ targetCustomerId = null, onSelectCus
               <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center mx-auto text-slate-400">
                 <Network className="w-6 h-6" />
               </div>
-              <p className="text-xs text-slate-700 font-semibold">No Entity Selected</p>
+              <p className="text-xs text-slate-800 font-semibold">No Entity Selected</p>
               <p className="text-[11px] text-slate-500 max-w-[200px] mx-auto leading-relaxed">
                 Click any node or link in the graph to inspect connection degrees, flow volume, and flagged ring status.
               </p>
