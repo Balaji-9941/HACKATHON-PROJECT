@@ -204,17 +204,17 @@ const evaluateMLTransaction = async (txnInput, customer = {}, merchant = null, r
   if (mlResult && typeof mlResult.probability === 'number') {
     // Directly scale probability to 0-100 score
     totalRiskScore = Math.min(100, Math.max(0, Math.round(mlResult.probability * 100)));
-
-    // Continuous baseline ratio booster: Ensure high amount ratios scale continuously and predictably
-    if (amountAnomaly >= 40 && totalRiskScore < 75) {
-      totalRiskScore = Math.min(84, Math.max(totalRiskScore, 75)); // High severity step-up
-    } else if (amountAnomaly >= 30 && totalRiskScore < 60) {
-      totalRiskScore = Math.min(69, Math.max(totalRiskScore, 55)); // Medium severity confirm
-    } else if (amountAnomaly >= 20 && totalRiskScore < 35) {
-      totalRiskScore = Math.min(45, Math.max(totalRiskScore, 30)); // Low severity banner
-    }
   } else {
     totalRiskScore = compositeScore;
+  }
+
+  // Continuous baseline ratio booster: Ensure high amount ratios scale continuously and predictably
+  if (amountAnomaly >= 40 && totalRiskScore < 75) {
+    totalRiskScore = Math.min(84, Math.max(totalRiskScore, 75)); // High severity step-up
+  } else if (amountAnomaly >= 30 && totalRiskScore < 60) {
+    totalRiskScore = Math.min(69, Math.max(totalRiskScore, 55)); // Medium severity confirm
+  } else if (amountAnomaly >= 20 && totalRiskScore < 35) {
+    totalRiskScore = Math.min(45, Math.max(totalRiskScore, 30)); // Low severity banner
   }
 
   // 3. Graduated friction bands & alert severity mapping
