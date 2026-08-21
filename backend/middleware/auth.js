@@ -29,6 +29,26 @@ const requireAuth = async (req, res, next) => {
 };
 
 /**
+ * Optional authentication middleware for read-only & demo evaluation endpoints
+ */
+const optionalAuth = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      const decoded = jwt.verify(token, JWT_SECRET);
+      const investigator = await Investigator.findById(decoded.id).select('-passwordHash');
+      if (investigator) {
+        req.user = investigator;
+      }
+    }
+  } catch (e) {
+    // Allow through for demo
+  }
+  next();
+};
+
+/**
  * Requires admin role
  */
 const requireAdmin = (req, res, next) => {
@@ -41,5 +61,6 @@ const requireAdmin = (req, res, next) => {
 module.exports = {
   JWT_SECRET,
   requireAuth,
+  optionalAuth,
   requireAdmin
 };

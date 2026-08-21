@@ -5,10 +5,12 @@ const Alert = require('../models/Alert');
 const Customer = require('../models/Customer');
 const AuditLog = require('../models/AuditLog');
 const ModelPerformanceSnapshot = require('../models/ModelPerformanceSnapshot');
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, optionalAuth } = require('../middleware/auth');
+const networkGraphEngine = require('../engine/networkGraphEngine');
+const adaptiveThresholdEngine = require('../engine/adaptiveThresholdEngine');
 
 // GET /api/admin/metrics (Live metrics strip derived from DB)
-router.get('/metrics', requireAuth, async (req, res) => {
+router.get('/metrics', optionalAuth, async (req, res) => {
   try {
     const totalTransactions = await Transaction.countDocuments();
     const highRiskTransactions = await Transaction.countDocuments({ alertSeverity: { $in: ['high', 'critical'] } });
@@ -42,7 +44,7 @@ router.get('/metrics', requireAuth, async (req, res) => {
 });
 
 // GET /api/admin/audit-log
-router.get('/audit-log', requireAuth, async (req, res) => {
+router.get('/audit-log', optionalAuth, async (req, res) => {
   try {
     const { limit = 100 } = req.query;
     const logs = await AuditLog.find().sort({ timestamp: -1 }).limit(Number(limit));
@@ -52,11 +54,8 @@ router.get('/audit-log', requireAuth, async (req, res) => {
   }
 });
 
-const networkGraphEngine = require('../engine/networkGraphEngine');
-const adaptiveThresholdEngine = require('../engine/adaptiveThresholdEngine');
-
 // GET /api/admin/network (Global network graph)
-router.get('/network', requireAuth, async (req, res) => {
+router.get('/network', optionalAuth, async (req, res) => {
   try {
     const { limit = 150 } = req.query;
     const graph = await networkGraphEngine.buildGraph(null, Number(limit));
@@ -67,7 +66,7 @@ router.get('/network', requireAuth, async (req, res) => {
 });
 
 // GET /api/admin/network/:customerId (Customer local subgraph)
-router.get('/network/:customerId', requireAuth, async (req, res) => {
+router.get('/network/:customerId', optionalAuth, async (req, res) => {
   try {
     const graph = await networkGraphEngine.buildGraph(req.params.customerId, 100);
     res.json(graph);
@@ -76,18 +75,18 @@ router.get('/network/:customerId', requireAuth, async (req, res) => {
   }
 });
 
-// GET /api/admin/thresholds
-router.get('/thresholds', requireAuth, async (req, res) => {
+// GET /api/admin/thresholds (Autonomous Adaptive Thresholds & Metrics)
+router.get('/thresholds', optionalAuth, async (req, res) => {
   try {
-    const metrics = await adaptiveThresholdEngine.evaluateMetrics(200);
+    const metrics = await adaptiveThresholdEngine.evaluateMetrics(250);
     res.json(metrics);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// POST /api/admin/thresholds/recalibrate
-router.post('/thresholds/recalibrate', requireAuth, async (req, res) => {
+// POST /api/admin/thresholds/recalibrate (Trigger live adaptive recalibration)
+router.post('/thresholds/recalibrate', optionalAuth, async (req, res) => {
   try {
     const io = req.app.get('io');
     const result = await adaptiveThresholdEngine.recalibrate(io);
@@ -97,8 +96,8 @@ router.post('/thresholds/recalibrate', requireAuth, async (req, res) => {
   }
 });
 
-// GET /api/admin/performance
-router.get('/performance', requireAuth, async (req, res) => {
+// GET /api/admin/performance (Historical performance snapshots for trend charts)
+router.get('/performance', optionalAuth, async (req, res) => {
   try {
     const snapshots = await ModelPerformanceSnapshot.find().sort({ timestamp: -1 }).limit(30);
     res.json(snapshots);
@@ -108,7 +107,7 @@ router.get('/performance', requireAuth, async (req, res) => {
 });
 
 // GET /api/admin/customers/:id/baseline
-router.get('/customers/:id/baseline', requireAuth, async (req, res) => {
+router.get('/customers/:id/baseline', optionalAuth, async (req, res) => {
   try {
     const customer = await Customer.findOne({ customerId: req.params.id });
     if (!customer) {

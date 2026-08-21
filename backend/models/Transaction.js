@@ -25,7 +25,7 @@ const transactionSchema = new mongoose.Schema({
   scenarioType: { type: String, default: null },
   flowSource: {
     type: String,
-    enum: ['consumer', 'autoflow_replay', 'autoflow_scenario', 'manual_injection'],
+    enum: ['consumer', 'consumer_live', 'autoflow_replay', 'autoflow_scenario', 'autoflow_stream', 'manual_injection'],
     default: 'consumer',
     index: true
   },

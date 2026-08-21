@@ -6,6 +6,7 @@ const Merchant = require('../models/Merchant');
 const { evaluateMLTransaction } = require('../engine/telemetryEngine');
 const mlClient = require('../engine/mlClient');
 const narrativeEngine = require('../engine/narrativeEngine');
+const adaptiveThresholdEngine = require('../engine/adaptiveThresholdEngine');
 const { handleTransactionAlert } = require('../services/alertManager');
 const { logAuditEvent } = require('../services/auditLogger');
 
@@ -41,6 +42,26 @@ router.post('/pre-check', async (req, res) => {
       recentTxns
     );
 
+    // Generate Explainable AI (XAI / LLM) narrative synthesis ONLY for risky/fraud transactions
+    let aiNarrative = null;
+    if (assessment.totalRiskScore >= 50) {
+      try {
+        aiNarrative = await narrativeEngine.generateNarrative({
+          amount,
+          customer,
+          riskScore: assessment.totalRiskScore,
+          factors: assessment.explanationFactors,
+          location,
+          deviceId,
+          deviceName,
+          recipientName: recipientName || recipientUpiId,
+          merchantCategory
+        });
+      } catch (err) {
+        // Non-blocking fallback
+      }
+    }
+
     const diff = process.hrtime(reqStart);
     const serverLatencyMs = Number((diff[0] * 1000 + diff[1] / 1e6).toFixed(2));
 
@@ -48,6 +69,7 @@ router.post('/pre-check', async (req, res) => {
       success: true,
       riskAssessment: {
         ...assessment,
+        aiNarrative,
         serverLatencyMs
       }
     });
@@ -57,7 +79,7 @@ router.post('/pre-check', async (req, res) => {
   }
 });
 
-// POST /api/transactions/confirm (Pure ML Settlement & Double-Entry Balance Update)
+// POST /api/transactions/confirm (Pure ML Settlement, Double-Entry & Autonomous Tuning)
 router.post('/confirm', async (req, res) => {
   const reqStart = process.hrtime();
   try {
@@ -95,7 +117,7 @@ router.post('/confirm', async (req, res) => {
       timestamp: { $gte: cutoff }
     }).select('timestamp');
 
-    // 1. Direct Pure ML Evaluation
+    // 1. Direct Pure ML Evaluation (<18ms)
     const assessment = await evaluateMLTransaction(
       { amount, location, deviceId, deviceName, merchantCategory, timestamp: new Date() },
       customer,
@@ -123,6 +145,26 @@ router.post('/confirm', async (req, res) => {
       }
     }
 
+    // 3. Generate AI Narrative ONLY for risky/fraud transactions (Token conservation)
+    let aiNarrative = null;
+    if (assessment.totalRiskScore >= 50) {
+      try {
+        aiNarrative = await narrativeEngine.generateNarrative({
+          amount,
+          customer,
+          riskScore: assessment.totalRiskScore,
+          factors: assessment.explanationFactors,
+          location,
+          deviceId,
+          deviceName,
+          recipientName: recipientName || recipientUpiId,
+          merchantCategory
+        });
+      } catch (narrativeErr) {
+        // Non-blocking fallback
+      }
+    }
+
     const transactionDoc = new Transaction({
       transactionId,
       customerId,
@@ -146,6 +188,7 @@ router.post('/confirm', async (req, res) => {
       anomalyFeatures: assessment.anomalyFeatures,
       fraudExplanation: assessment.fraudExplanation,
       explanationFactors: assessment.explanationFactors,
+      aiNarrative,
 
       modelTier: 2,
       mlProbability: assessment.mlProbability,
@@ -160,11 +203,14 @@ router.post('/confirm', async (req, res) => {
 
     await transactionDoc.save();
 
-    // 3. Auto Alert Creation if high/critical ML risk
+    // 4. Auto Alert Creation if high/critical ML risk
     const io = req.app.get('io');
     await handleTransactionAlert(transactionDoc, customer, io);
 
-    // 4. Broadcast live transaction via Socket.io
+    // 5. Track transaction in Adaptive Threshold Engine
+    adaptiveThresholdEngine.trackTransaction(transactionDoc, io);
+
+    // 6. Broadcast live transaction via Socket.io
     if (io) {
       io.emit('admin:new_transaction', transactionDoc);
     }
@@ -215,7 +261,7 @@ router.get('/', async (req, res) => {
         filter.customerId = customerId;
       }
 
-      // Filter out simulated and autoflow background stream transactions from the user's personal ledger
+      // Filter out simulated and autoflow background stream transactions from user passbook
       if (includeSimulated !== 'true') {
         filter.flowSource = { $nin: ['autoflow_stream', 'autoflow_replay', 'scenario_simulation', 'autoflow_scenario'] };
         filter.isSimulatedScenario = { $ne: true };

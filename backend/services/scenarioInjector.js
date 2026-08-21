@@ -5,6 +5,7 @@ const { evaluateMLTransaction } = require('../engine/telemetryEngine');
 const { handleTransactionAlert } = require('./alertManager');
 const { logAuditEvent } = require('./auditLogger');
 const mlClient = require('../engine/mlClient');
+const narrativeEngine = require('../engine/narrativeEngine');
 
 const SCENARIO_TYPES = {
   VELOCITY_BURST: 'velocity_burst',
@@ -118,17 +119,22 @@ const triggerScenario = async (scenarioType, flowSource = 'manual_injection', io
     }
 
     case SCENARIO_TYPES.MULE_RING: {
-      const amount = 44000;
+      const amount = 98000;
       recipientUpiId = 'p2pdesk@cryptopay';
       recipientName = 'CryptoExchange P2P Desk';
       merchantCategory = 'crypto_virtual';
       merchantRiskTier = 5;
 
+      customer = {
+        ...customer.toObject(),
+        networkRiskTier: 5
+      };
+
       txnInput = {
         amount,
-        location: 'Kolkata, IN',
-        deviceId: 'DEV-NEW-MULE-AGGREGATOR-01',
-        deviceName: 'Mule Terminal Cluster',
+        location: customer.usualLocation,
+        deviceId: 'DEV-NEW-MULE-NODE',
+        deviceName: 'Untrusted Relay Device',
         merchantCategory,
         timestamp: now
       };
@@ -136,17 +142,16 @@ const triggerScenario = async (scenarioType, flowSource = 'manual_injection', io
     }
 
     case SCENARIO_TYPES.CARD_TESTING: {
-      const amount = 25;
-      recipientUpiId = 'tataneu@hdfcbank';
-      recipientName = 'Tata Neu SuperApp';
-      merchantCategory = 'retail';
-      merchantRiskTier = 1;
+      const amount = 15;
+      recipientUpiId = 'testmerchant@upi';
+      recipientName = 'Micro Charge Verification';
+      merchantCategory = 'ecommerce';
 
       txnInput = {
         amount,
-        location: customer.usualLocation,
-        deviceId: customer.knownDevices[0] || 'dev-pixel-8',
-        deviceName: 'Pixel-8-Pro',
+        location: 'Mumbai, IN',
+        deviceId: 'DEV-NEW-SCRIPT',
+        deviceName: 'Automated Bot Client',
         merchantCategory,
         timestamp: now
       };
@@ -177,6 +182,26 @@ const triggerScenario = async (scenarioType, flowSource = 'manual_injection', io
     recentTxns
   );
 
+  // Generate Explainable AI Narrative
+  let aiNarrative = null;
+  if (assessment.totalRiskScore >= 50) {
+    try {
+      aiNarrative = await narrativeEngine.generateNarrative({
+        amount: txnInput.amount,
+        customer: customerProfile,
+        riskScore: assessment.totalRiskScore,
+        factors: assessment.explanationFactors,
+        location: txnInput.location,
+        deviceId: txnInput.deviceId,
+        deviceName: txnInput.deviceName,
+        recipientName,
+        merchantCategory
+      });
+    } catch (e) {
+      // fallback
+    }
+  }
+
   const transactionId = `TXN-SCENARIO-${Date.now()}-${Math.floor(1000 + (assessment.totalRiskScore * 7))}`;
 
   const txnDoc = new Transaction({
@@ -201,6 +226,7 @@ const triggerScenario = async (scenarioType, flowSource = 'manual_injection', io
     anomalyFeatures: assessment.anomalyFeatures,
     fraudExplanation: assessment.fraudExplanation,
     explanationFactors: assessment.explanationFactors,
+    aiNarrative,
 
     modelTier: 2,
     mlProbability: assessment.mlProbability,

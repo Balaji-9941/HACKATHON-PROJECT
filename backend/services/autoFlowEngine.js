@@ -4,6 +4,7 @@ const Transaction = require('../models/Transaction');
 const { evaluateMLTransaction } = require('../engine/telemetryEngine');
 const { triggerScenario, SCENARIO_TYPES } = require('./scenarioInjector');
 const { handleTransactionAlert } = require('./alertManager');
+const adaptiveThresholdEngine = require('../engine/adaptiveThresholdEngine');
 
 class AutoFlowEngine {
   constructor() {
@@ -208,6 +209,9 @@ class AutoFlowEngine {
 
       // Check alert
       await handleTransactionAlert(txnDoc, customer, this.io);
+
+      // Track in Adaptive Threshold Engine
+      await adaptiveThresholdEngine.trackTransaction(txnDoc, this.io);
 
     } catch (tickErr) {
       console.error('[AutoFlowEngine Tick Error]:', tickErr.message);

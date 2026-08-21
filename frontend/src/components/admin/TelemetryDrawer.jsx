@@ -1,14 +1,16 @@
 import React from 'react';
-import { X, ShieldAlert, Cpu, Activity, ExternalLink, Smartphone, MapPin, Clock, User, Layers, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { X, ShieldAlert, Cpu, Activity, ExternalLink, Smartphone, MapPin, Clock, User, Layers, CheckCircle2, AlertTriangle, Sparkles, ShieldCheck } from 'lucide-react';
 import { formatCurrency, getRiskColor } from '../../utils/api';
 import ScoreBreakdownChart from './ScoreBreakdownChart';
 
 export default function TelemetryDrawer({ transaction, onClose, onInspectNetwork }) {
   if (!transaction) return null;
 
+  const isRisky = transaction.totalRiskScore >= 50 || ['medium', 'high', 'critical'].includes(transaction.alertSeverity);
   const risk = getRiskColor(transaction.alertSeverity);
   const riskBreakdown = transaction.riskBreakdown || {};
   const factors = transaction.explanationFactors || [];
+  const xaiNarrative = transaction.aiNarrative || transaction.fraudExplanation;
 
   const signals = [
     { label: 'Amount Baseline Anomaly', score: riskBreakdown.amountAnomaly || 0, max: 50 },
@@ -33,7 +35,7 @@ export default function TelemetryDrawer({ transaction, onClose, onInspectNetwork
             </span>
           </div>
           <h3 className="text-base font-bold text-slate-900 mt-1">
-            XGBoost ML Inspector & TreeSHAP Explainability
+            XGBoost Telemetry & TreeSHAP Factor Inspector
           </h3>
         </div>
         <button
@@ -55,27 +57,60 @@ export default function TelemetryDrawer({ transaction, onClose, onInspectNetwork
 
           <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
             <span className="text-[10px] text-slate-500 font-semibold uppercase">ML Model Risk Score</span>
-            <p className="text-xl font-bold font-mono text-rose-700">{transaction.totalRiskScore}/100</p>
+            <p className={`text-xl font-bold font-mono ${isRisky ? 'text-rose-700' : 'text-emerald-700'}`}>
+              {transaction.totalRiskScore}/100
+            </p>
           </div>
         </div>
 
-        {/* Hypothesis / Primary Inference Box */}
-        <div className={`p-4 rounded-xl border space-y-1.5 ${risk.bg} ${risk.border}`}>
-          <span className="text-xs font-bold text-slate-900 flex items-center space-x-1.5">
-            <ShieldAlert className="w-4 h-4 text-rose-600" />
-            <span>XGBoost Fraud Classification Inference:</span>
-          </span>
-          <p className="text-xs text-slate-800 leading-relaxed font-medium">
-            {transaction.fraudExplanation || 'All 10 telemetry factors evaluated within safe operational bounds.'}
-          </p>
-
-          {/* AI Narrative if available */}
-          {transaction.aiNarrative && (
-            <div className="mt-3 p-3 rounded-lg bg-white border border-slate-200 text-xs text-slate-800 leading-relaxed shadow-xs">
-              <span className="font-bold text-blue-700 block mb-1">AI Narrative Synthesis:</span>
-              <p className="italic font-medium">{transaction.aiNarrative}</p>
+        {/* EXPLAINABLE AI (XAI / LLM LAYER) — DISPLAYED ONLY FOR RISKY / FRAUD TRANSACTIONS */}
+        {isRisky ? (
+          <div className="p-4 rounded-xl bg-gradient-to-br from-indigo-900 via-slate-900 to-blue-950 text-white shadow-lg border border-indigo-500/30 space-y-3">
+            <div className="flex items-center justify-between border-b border-indigo-800/60 pb-2.5">
+              <div className="flex items-center space-x-2">
+                <div className="p-1 rounded-lg bg-indigo-500/20 text-indigo-300">
+                  <Sparkles className="w-4 h-4 text-indigo-400 animate-pulse" />
+                </div>
+                <span className="text-xs font-bold text-indigo-200 uppercase tracking-wider">
+                  Explainable AI (XAI) Reasoning Synthesis
+                </span>
+              </div>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/30 text-indigo-300 border border-indigo-400/30 font-bold">
+                LLM Layer Active
+              </span>
             </div>
-          )}
+
+            <p className="text-xs text-slate-200 leading-relaxed font-medium">
+              {xaiNarrative}
+            </p>
+          </div>
+        ) : (
+          <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 flex items-center space-x-2.5">
+            <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
+            <div className="text-xs">
+              <span className="font-bold block">Verified Legitimate Baseline</span>
+              <p className="text-emerald-800 text-[11px] mt-0.5">
+                All 10 telemetry factors conform to typical customer profile. Full TreeSHAP feature attributions available below.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* EXACT TREESHAP FACTOR ATTRIBUTIONS (AVAILABLE FOR ALL TRANSACTIONS) */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+              Exact TreeSHAP Additive Factor Attribution
+            </h4>
+            <span className="text-[10px] font-mono text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 font-semibold">
+              shap.TreeExplainer (C++)
+            </span>
+          </div>
+
+          <ScoreBreakdownChart
+            shapValues={transaction.shapValues}
+            riskBreakdown={transaction.riskBreakdown}
+          />
         </div>
 
         {/* Complete Factor Breakdown Checklist (All 10 Factors) */}
@@ -112,10 +147,10 @@ export default function TelemetryDrawer({ transaction, onClose, onInspectNetwork
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <span className="font-bold">{f.factor}</span>
-                      <span className={`font-mono text-[10px] font-bold px-1.5 py-0.2 rounded ${
-                        isFlagged ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'
+                      <span className={`font-mono text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                        isFlagged ? 'bg-rose-100 text-rose-800' : isWarning ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
                       }`}>
-                        {isFlagged ? `+${f.contribution} pts` : 'Verified (0 pts)'}
+                        {isFlagged ? `+${f.contribution} pts` : isWarning ? `+${f.contribution} pts` : 'Verified (0 pts)'}
                       </span>
                     </div>
                     <p className="text-[11px] opacity-85 mt-1 leading-relaxed">{f.plainText}</p>
@@ -151,23 +186,6 @@ export default function TelemetryDrawer({ transaction, onClose, onInspectNetwork
               );
             })}
           </div>
-        </div>
-
-        {/* Real TreeSHAP Factor Attributions */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-              Exact TreeSHAP Additive Factor Attribution
-            </h4>
-            <span className="text-[10px] font-mono text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 font-semibold">
-              shap.TreeExplainer (C++)
-            </span>
-          </div>
-
-          <ScoreBreakdownChart
-            shapValues={transaction.shapValues}
-            riskBreakdown={transaction.riskBreakdown}
-          />
         </div>
 
         {/* Network Graph Link */}

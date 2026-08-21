@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { ArrowLeft, ArrowRight, Building, MapPin, Smartphone, Cpu, CheckCircle2, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
-import { formatCurrency, getRiskColor } from '../../utils/api';
+import { ArrowLeft, ArrowRight, Building, MapPin, Smartphone, ShieldCheck, AlertTriangle, Lock } from 'lucide-react';
+import { formatCurrency } from '../../utils/api';
 import RiskWarningModal from './RiskWarningModal';
 
 export default function PaymentReview({
@@ -15,10 +15,9 @@ export default function PaymentReview({
   isProcessing,
 }) {
   const [isMediumModalOpen, setIsMediumModalOpen] = useState(false);
-  const [showAllFactors, setShowAllFactors] = useState(true);
 
-  const riskStyle = getRiskColor(assessment?.alertSeverity);
-  const factors = assessment?.explanationFactors || [];
+  const isRisky = assessment && (assessment.totalRiskScore >= 50 || ['high', 'critical', 'medium'].includes(assessment.alertSeverity));
+  const isHighRisk = assessment && (assessment.totalRiskScore >= 70 || ['high', 'critical'].includes(assessment.alertSeverity));
 
   const handlePayClick = () => {
     if (assessment?.userFrictionLevel === 'confirm') {
@@ -30,6 +29,7 @@ export default function PaymentReview({
 
   return (
     <div className="space-y-4 animate-fade-in text-slate-900">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <button onClick={onBack} className="p-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:text-slate-900 shadow-xs">
           <ArrowLeft className="w-5 h-5" />
@@ -55,143 +55,91 @@ export default function PaymentReview({
         </div>
 
         <div className="pt-3 border-t border-slate-100 flex justify-between items-baseline">
-          <span className="text-xs text-slate-500 font-medium">Total Transfer Amount</span>
+          <span className="text-xs text-slate-500 font-medium">Transfer Amount</span>
           <span className="text-2xl font-black text-slate-900 font-mono">{formatCurrency(amount)}</span>
         </div>
       </div>
 
-      {/* Graduated Friction: Banner (Low: 31-50) */}
-      {assessment?.userFrictionLevel === 'banner' && (
-        <RiskWarningModal
-          isOpen={true}
-          assessment={assessment}
-          amount={amount}
-          recipient={recipient}
-        />
-      )}
-
-      {/* XGBoost Fraud Classification Inference Box with All Factors */}
-      <div className={`p-4 rounded-xl border ${riskStyle.bg} ${riskStyle.border} space-y-2.5`}>
-        <div className="flex items-center justify-between">
+      {/* Clear, Simple Security Verification Status for User (No Technical Scores) */}
+      {isRisky ? (
+        <div className={`p-4 rounded-xl border space-y-2 ${
+          isHighRisk ? 'bg-rose-50/80 border-rose-200 text-rose-950' : 'bg-amber-50/80 border-amber-200 text-amber-950'
+        }`}>
           <div className="flex items-center space-x-2">
-            <Cpu className="w-4 h-4 text-blue-600" />
-            <span className="text-xs font-bold text-slate-900">
-              XGBoost ML Risk Score: {assessment?.totalRiskScore || 0}/100
+            <AlertTriangle className={`w-4 h-4 ${isHighRisk ? 'text-rose-600' : 'text-amber-600'}`} />
+            <span className="text-xs font-bold uppercase tracking-wider">
+              {isHighRisk ? 'Security Verification Required' : 'Payment Advisory'}
             </span>
           </div>
-          <span className={`text-[10px] font-mono px-2 py-0.5 rounded-md font-bold uppercase ${riskStyle.badge}`}>
-            {assessment?.alertSeverity || 'NONE'}
-          </span>
+          <p className="text-xs leading-relaxed font-medium">
+            {isHighRisk
+              ? 'This transfer requires additional biometric authentication before processing to safeguard your account.'
+              : 'Please double-check the recipient details before confirming this payment.'}
+          </p>
         </div>
-
-        <p className="text-xs text-slate-800 leading-relaxed font-medium">
-          {assessment?.fraudExplanation}
-        </p>
-
-        {/* Expandable Factor Breakdown for Full Factor Transparency */}
-        {factors.length > 0 && (
-          <div className="pt-2 border-t border-slate-200/80 space-y-2">
-            <button
-              onClick={() => setShowAllFactors(!showAllFactors)}
-              className="flex items-center justify-between w-full text-[11px] font-bold text-slate-700 hover:text-blue-700 transition"
-            >
-              <span>XGBoost Telemetry Factor Inspector ({factors.length} Signals Evaluated)</span>
-              {showAllFactors ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-            </button>
-
-            {showAllFactors && (
-              <div className="space-y-1.5 pt-1">
-                {factors.map((f, i) => {
-                  const isFlagged = f.status === 'flagged';
-                  const isWarning = f.status === 'warning';
-                  return (
-                    <div
-                      key={i}
-                      className={`p-2 rounded-lg border text-[11px] flex items-start space-x-2 ${
-                        isFlagged
-                          ? 'bg-rose-50 border-rose-200 text-rose-900'
-                          : isWarning
-                          ? 'bg-amber-50 border-amber-200 text-amber-900'
-                          : 'bg-emerald-50/70 border-emerald-200 text-emerald-900'
-                      }`}
-                    >
-                      {isFlagged ? (
-                        <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0 mt-0.5" />
-                      ) : isWarning ? (
-                        <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
-                      ) : (
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold">{f.factor}</span>
-                          <span className={`font-mono text-[10px] font-semibold px-1 rounded ${
-                            isFlagged ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'
-                          }`}>
-                            {isFlagged ? `+${f.contribution} pts` : 'Verified (0 pts)'}
-                          </span>
-                        </div>
-                        <p className="text-[10px] opacity-90 mt-0.5 leading-normal">{f.plainText}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+      ) : (
+        <div className="p-3.5 rounded-xl bg-emerald-50/80 border border-emerald-200 text-emerald-950 flex items-center space-x-2.5">
+          <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+          <div className="flex-1 text-xs font-medium">
+            <span>Verified & Protected by Real-Time Payment Security</span>
           </div>
-        )}
-
-        <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between text-[10px] text-slate-500 font-mono">
-          <span>Engine: <strong className="text-blue-700">Balanced XGBoost v4</strong></span>
-          <span>Latency: <strong className="text-emerald-700 font-bold">{assessment?.latencyMs || assessment?.serverLatencyMs || 12}ms</strong></span>
         </div>
-      </div>
+      )}
 
-      {/* Note input */}
-      <div>
+      {/* Note Input */}
+      <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-card space-y-1.5">
+        <label className="text-[11px] font-semibold text-slate-600 uppercase">Payment Note (Optional)</label>
         <input
           type="text"
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder="Add a note (e.g. Split dinner)"
-          className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-xs"
+          placeholder="e.g. Monthly rent, Dinner share"
+          className="w-full text-xs p-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 bg-white"
         />
       </div>
 
-      {/* Confirm Button */}
-      <div className="pt-1">
+      {/* Security Context Info */}
+      <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-[11px] text-slate-500 font-medium">
+        <span className="flex items-center space-x-1">
+          <Smartphone className="w-3.5 h-3.5 text-slate-400" />
+          <span>{customer?.knownDevices?.[0]?.includes('iphone') ? 'iPhone 15 Pro' : customer?.knownDevices?.[0]?.includes('galaxy') ? 'Galaxy S24 Ultra' : 'Pixel 8 Pro'}</span>
+        </span>
+        <span className="flex items-center space-x-1">
+          <MapPin className="w-3.5 h-3.5 text-slate-400" />
+          <span>{customer?.usualLocation || 'Bangalore, IN'}</span>
+        </span>
+        <span className="flex items-center space-x-1">
+          <Lock className="w-3.5 h-3.5 text-emerald-600" />
+          <span>256-Bit Encrypted</span>
+        </span>
+      </div>
+
+      {/* Action Button */}
+      <div className="pt-2">
         <button
           onClick={handlePayClick}
           disabled={isProcessing}
-          className={`w-full py-3 rounded-xl font-bold text-sm shadow-md transition active:scale-[0.98] flex items-center justify-center space-x-2 ${
-            assessment?.alertSeverity === 'critical' || assessment?.alertSeverity === 'high'
-              ? 'bg-rose-600 hover:bg-rose-700 text-white'
-              : 'bg-blue-600 hover:bg-blue-700 text-white'
-          }`}
+          className="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md transition flex items-center justify-center space-x-2 disabled:opacity-50"
         >
-          {isProcessing ? (
-            <span>Settling payment...</span>
-          ) : (
-            <>
-              <span>Confirm & Pay {formatCurrency(amount)}</span>
-              <ArrowRight className="w-4 h-4" />
-            </>
-          )}
+          <span>{isProcessing ? 'Processing...' : `Pay ${formatCurrency(amount)}`}</span>
+          <ArrowRight className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Medium Risk Modal */}
-      <RiskWarningModal
-        isOpen={isMediumModalOpen}
-        assessment={assessment}
-        amount={amount}
-        recipient={recipient}
-        onConfirm={() => {
-          setIsMediumModalOpen(false);
-          onConfirm();
-        }}
-        onCancel={() => setIsMediumModalOpen(false)}
-      />
+      {/* Medium Risk Warning Modal */}
+      {isMediumModalOpen && (
+        <RiskWarningModal
+          isOpen={isMediumModalOpen}
+          assessment={assessment}
+          amount={amount}
+          recipient={recipient}
+          onConfirm={() => {
+            setIsMediumModalOpen(false);
+            onConfirm();
+          }}
+          onCancel={() => setIsMediumModalOpen(false)}
+        />
+      )}
     </div>
   );
 }

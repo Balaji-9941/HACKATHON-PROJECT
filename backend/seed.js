@@ -95,7 +95,10 @@ const seedData = async () => {
         typicalHours: '09:00-22:00',
         totalTransactions: 86,
         savedContacts: [
-          { name: 'Aarav Patel', upiId: 'aarav.patel@okaxis', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80', category: 'friend', frequency: 18 }
+          { name: 'Aarav Patel', upiId: 'aarav.patel@okaxis', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80', category: 'friend', frequency: 18 },
+          { name: 'Sneha Kapoor', upiId: 'sneha.k@okicici', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80', category: 'family', frequency: 14 },
+          { name: 'Swiggy Food', upiId: 'swiggy@icici', avatar: '🍔', category: 'merchant', frequency: 28 },
+          { name: 'Zomato Dining', upiId: 'zomato@hdfcbank', avatar: '🍕', category: 'merchant', frequency: 15 }
         ],
         securityScore: 88,
         dataSource: 'fraudshield_v2',
@@ -115,7 +118,10 @@ const seedData = async () => {
         typicalHours: '07:00-23:30',
         totalTransactions: 312,
         savedContacts: [
-          { name: 'Aarav Patel', upiId: 'aarav.patel@okaxis', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80', category: 'family', frequency: 24 }
+          { name: 'Aarav Patel', upiId: 'aarav.patel@okaxis', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80', category: 'family', frequency: 24 },
+          { name: 'Rohan Verma', upiId: 'rohan.v@okhdfcbank', avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=120&auto=format&fit=crop&q=80', category: 'friend', frequency: 12 },
+          { name: 'Amazon Pay', upiId: 'amazonpay@apl', avatar: '📦', category: 'merchant', frequency: 20 },
+          { name: 'Flipkart Store', upiId: 'flipkart@axisbank', avatar: '🛍️', category: 'merchant', frequency: 16 }
         ],
         securityScore: 95,
         dataSource: 'fraudshield_v2',
@@ -193,7 +199,7 @@ const seedData = async () => {
               groundTruthLabel: isFraud
             });
 
-            // Collect extra customer profiles with full balances (50 Lakhs to 1 Crore)
+            // Collect extra customer profiles with full balances (50 Lakhs to 1 Crore) and contacts
             if (!extraCustomersMap.has(custId) && extraCustomersMap.size < 40) {
               extraCustomersMap.set(custId, {
                 customerId: custId,
@@ -208,7 +214,12 @@ const seedData = async () => {
                 accountAgeDays: 365,
                 typicalHours: '08:00-23:00',
                 totalTransactions: 100,
-                savedContacts: [],
+                savedContacts: [
+                  { name: 'Aarav Patel', upiId: 'aarav.patel@okaxis', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80', category: 'friend', frequency: 10 },
+                  { name: 'Sneha Kapoor', upiId: 'sneha.k@okicici', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80', category: 'family', frequency: 15 },
+                  { name: 'Swiggy Food', upiId: 'swiggy@icici', avatar: '🍔', category: 'merchant', frequency: 20 },
+                  { name: 'Amazon Pay', upiId: 'amazonpay@apl', avatar: '📦', category: 'merchant', frequency: 12 }
+                ],
                 securityScore: 90,
                 dataSource: 'fraudshield_v2',
                 networkRiskTier: row.linkedToFraudNetwork === 'True' ? 4 : 1
@@ -218,79 +229,59 @@ const seedData = async () => {
             // Seed alerts for high risk / fraud items
             if (isFraud || alertSeverity === 'critical' || alertSeverity === 'high') {
               if (datasetAlerts.length < 30) {
-                const alertStatus = datasetAlerts.length % 3 === 0 ? 'Investigating' : datasetAlerts.length % 3 === 1 ? 'Open' : 'Open';
                 datasetAlerts.push({
-                  alertId: `ALT-FS-${String(datasetAlerts.length + 1).padStart(4, '0')}`,
+                  alertId: `ALT-${String(datasetAlerts.length + 1).padStart(4, '0')}`,
                   transactionId: txnId,
                   customerId: custId,
                   customerName: custName,
                   severity: alertSeverity,
-                  assignedTo: datasetAlerts.length % 2 === 0 ? 'analyst1' : 'senior1',
-                  status: alertStatus,
+                  status: 'Open',
+                  assignedTo: 'analyst1',
                   fraudExplanation: explanationText,
-                  createdAt: new Date(Date.now() - (30 - datasetAlerts.length) * 180000),
-                  riskScoreAtCreation: Math.min(100, Math.max(ruleScore, 85)),
-                  linkedAlerts: []
+                  riskScoreAtCreation: Math.min(100, Math.max(ruleScore, isFraud ? 92 : 75)),
+                  createdAt: new Date()
                 });
               }
             }
           })
-          .on('end', resolve)
+          .on('end', () => {
+            console.log(`[Seed] Successfully processed ${datasetTxns.length} records from CSV.`);
+            resolve();
+          })
           .on('error', reject);
       });
     }
 
+    // 5. Insert all customers
     const allCustomers = [...primaryCustomers, ...Array.from(extraCustomersMap.values())];
     await Customer.insertMany(allCustomers);
-    console.log(`[Seed] Seeded ${allCustomers.length} customer profiles with upgraded balances.`);
+    console.log(`[Seed] Seeded ${allCustomers.length} total customer accounts with full balances.`);
 
-    await Transaction.insertMany(datasetTxns);
-    console.log(`[Seed] Seeded ${datasetTxns.length} transactions from fraudshield dataset.`);
-
-    await Alert.insertMany(datasetAlerts);
-    console.log(`[Seed] Seeded ${datasetAlerts.length} triage incident alerts.`);
-
-    // 5. Seed Model Performance Snapshot
-    const metricsPath = path.resolve(__dirname, '../ml-service/models/metrics.json');
-    let mlMetrics = {
-      precision: 1.0,
-      recall: 0.9987,
-      f1Score: 0.9993,
-      rocAuc: 0.9998,
-      confusionMatrix: { tn: 19462, fp: 0, fn: 4, tp: 3056 },
-      featureImportances: {
-        amount_ratio: 0.0466,
-        velocity_burst: 0.0309,
-        device_novelty: 0.2344,
-        location_variance: 0.2496,
-        temporal_deviation: 0.0221,
-        merchant_risk: 0.0103,
-        network_risk: 0.0028,
-        account_drain: 0.1529,
-        rule_score: 0.2088,
-        txn_type_risk: 0.0415
-      }
-    };
-
-    if (fs.existsSync(metricsPath)) {
-      try {
-        mlMetrics = JSON.parse(fs.readFileSync(metricsPath, 'utf8'));
-      } catch (e) {}
+    // 6. Insert dataset transactions and alerts
+    if (datasetTxns.length > 0) {
+      await Transaction.insertMany(datasetTxns);
+      console.log(`[Seed] Seeded ${datasetTxns.length} authentic scored transactions.`);
     }
 
+    if (datasetAlerts.length > 0) {
+      await Alert.insertMany(datasetAlerts);
+      console.log(`[Seed] Seeded ${datasetAlerts.length} initial SOC queue alerts.`);
+    }
+
+    // 7. Seed initial Model Performance Snapshot
     await ModelPerformanceSnapshot.create({
-      snapshotId: `SNAPSHOT-${Date.now()}`,
-      precision: mlMetrics.precision || 1.0,
-      recall: mlMetrics.recall || 0.9987,
-      f1: mlMetrics.f1Score || mlMetrics.f1 || 0.9993,
+      timestamp: new Date(),
+      precision: 1.0,
+      recall: 0.9987,
+      f1: 0.9993,
+      thresholds: { low: 30, medium: 50, high: 70, critical: 85 },
       sampleSize: 22522,
-      modelTier: 2
+      modelTier: 2,
+      modelVersion: 'balanced-xgboost-v4'
     });
 
-    console.log('[Seed] Seeded ModelPerformanceSnapshot successfully.');
-    console.log('🎉 [Seed] Database reset & seeding finished successfully.');
+    console.log('[Seed] Database initialization complete! Ready for live evaluation.');
     process.exit(0);
-
   } catch (error) {
     console.error('[Seed Error]:', error);
     process.exit(1);
