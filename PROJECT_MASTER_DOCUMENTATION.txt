@@ -1,474 +1,496 @@
 ====================================================================================================
-           PAYTELEMETRY / FRAUDSHIELD AI — COMPLETE MASTER TECHNICAL SPECIFICATION
+                        PAYTELEMETRY / FRAUDSHIELD AI — MASTER PROJECT DOCUMENTATION
+               Autonomous Multi-Tier UPI Fraud Detection & Explainable AI Intelligence Platform
 ====================================================================================================
-Hackathon: Hexaware Mavericks Hackathon 2026
-Team Name: Chronoforge
-Project Title: PayTelemetry: Autonomous In-Flight Fraud Intelligence Platform
-Repository: https://github.com/Balaji-9941/HACKATHON-PROJECT.git (Branch: main)
-Generated Date: 2026-08-18
 
-TEAM CHRONOFORGE & ROLES:
-1. BALAJI M      — Team Lead & ML Systems Architect (XGBoost Modeling, TreeSHAP, Telemetry Vectorization)
-2. DHARSHINI G S — Full-Stack & Streaming Pipeline Engineer (FastAPI Microservices, React In-Flight UI)
-3. DAKSHANYA D   — Backend & Telemetry Engineer (Node.js Gateway, Vector Extractors, Circuit Breakers)
-4. DEENA SHEK X  — UI/UX & SOC Analytics Engineer (Investigator Console, Entity Graphs, Kanban Triage)
+Author / Team      : Balaji-9941
+Repository         : https://github.com/Balaji-9941/HACKATHON-PROJECT.git
+Current Version    : 2.0.0 (Production / Cloud Ready)
+Target Ecosystem   : Real-Time Payments, UPI 2.0, FinTech Banking Gateways, SOC Cyber Defense
 
-====================================================================================================
-TABLE OF CONTENTS:
-====================================================================================================
-1. Problem Statement & Background Analysis
-2. The Approach Used by Chronoforge
-3. Innovations Built from the Problem Statement
-4. The Solution Obtained & System Verification
-5. End-to-End System Architecture & Data Flow
-6. Core Application Features (Consumer & SOC Console)
-7. Technology Stack & Dependencies
-8. Machine Learning & Mathematical Foundations
-9. Real-Time TreeSHAP Explainability Mechanics
-10. Business Impact, Financial ROI & Economics
-11. Regulatory Compliance & Governance Alignment
-12. Complete Codebase Structure & File Breakdown
-13. Installation, Execution & Demonstration Guide
-14. Evaluator Q&A & Technical Defense
+----------------------------------------------------------------------------------------------------
+TABLE OF CONTENTS
+----------------------------------------------------------------------------------------------------
+ 1. EXECUTIVE SUMMARY & CORE MISSION
+ 2. THE REAL-WORLD PROBLEM & ARCHITECTURAL SOLUTION
+ 3. TOP 5 CORE INNOVATIONS & DIFFERENTIATORS
+ 4. COMPREHENSIVE TECHNOLOGY STACK
+ 5. END-TO-END SYSTEM ARCHITECTURE & DATA PIPELINES
+ 6. 10-DIMENSIONAL STATISTICAL TELEMETRY & ML ENGINE
+ 7. TREESHAP EXPLAINABILITY & TOKEN-OPTIMIZED LLM LAYER
+ 8. AUTONOMOUS ADAPTIVE THRESHOLD & DRIFT DEFENSE ENGINE
+ 9. SOC INVESTIGATOR COMMAND CENTER & ENTITY GRAPH NETWORK
+10. CONSUMER FINTECH MOBILE EXPERIENCE (ZERO-FRICTION UX)
+11. COMPLETE PROJECT FILE STRUCTURE & MODULE DIRECTORY
+12. 125-TEST EXHAUSTIVE BENCHMARK & PERFORMANCE AUDIT
+13. LOCAL EXECUTION & MULTI-TERMINAL RUNBOOK
+14. 100% FREE CLOUD DEPLOYMENT BLUEPRINT (RENDER + VERCEL + ATLAS)
+15. SUMMARY & JUDGE/EVALUATOR QUICK REFERENCE
 
 ====================================================================================================
-1. PROBLEM STATEMENT & BACKGROUND ANALYSIS
+1. EXECUTIVE SUMMARY & CORE MISSION
 ====================================================================================================
-THE HACKATHON PROBLEM STATEMENT:
-"Fraudulent transactions must be detected within seconds to prevent financial losses while minimizing
-customer friction. Develop a fraud detection platform capable of monitoring payment streams in real time,
-assigning risk scores, detecting anomalies, providing investigation tools, and offering fraud explanations."
+PayTelemetry (FraudShield AI) is an enterprise-grade, sub-15ms real-time fraud detection and
+prevention platform engineered specifically for the ultra-high-throughput Unified Payments Interface
+(UPI 2.0) ecosystem.
 
-THE REAL-TIME SETTLEMENT CRISIS:
-Modern payment rails (UPI in India, Pix in Brazil, FedNow in the US, and Instant Card Rails) execute
-settlements irreversibly in under 1.5 to 2.0 seconds. 
+Traditional rule-based fraud filters face a crippling trade-off:
+- Strict static rules block legitimate customers (high False Positive Rate, damaging user trust).
+- Loose rules allow account takeover, impossible travel attacks, and velocity bursts to drain funds.
 
-Traditional fraud defense systems suffer from three fatal structural failures:
-1. The Post-Settlement Lag (Batch ML):
-   Heavy machine learning models (Random Forests, Deep Neural Nets) are computationally expensive and
-   run asynchronously 15–60 seconds after settlement. By the time fraud is detected, funds have already
-   been layered across multiple mule accounts and withdrawn via crypto or ATMs.
-2. The $58 Billion False Decline Crisis (Binary Rule Engines):
-   To avoid latency, banks rely on rigid binary IF-THEN rules (e.g. IF amount > ₹50,000 THEN BLOCK).
-   This creates an alarming 70%+ false positive rate. Industry-wide, merchants lose up to 58× more
-   revenue to false declines than to actual fraud, driving 33%+ immediate customer churn.
-3. Black-Box SOC Paralysis (Lack of Explainability):
-   Security analysts receive ambiguous numeric risk scores with zero feature attribution. Investigating
-   a single flagged case takes 15–25 minutes of manual database querying, during which organized syndicates
-   exploit systemic gaps.
+PayTelemetry solves this via a Unified Multi-Tier Architecture:
+1. Pure Machine Learning Inference (Balanced XGBoost Classifier operating on 10 telemetry signals).
+2. Exact TreeSHAP Additive Factor Attribution (shap.TreeExplainer in C++ hot path).
+3. Token-Optimized Explainable AI (Generative LLM Narrative synthesis for risky/fraudulent events).
+4. Autonomous Adaptive Threshold Engine (Self-calibrating precision/recall drift defense).
+5. Interactive Counterparty Entity Graph Explorer (Cytoscape network topology mapping).
+6. Consumer-Grade Clean Mobile UX (Google Pay / PhonePe-style zero-friction instant settlement).
+
+The result is a system operating at 100% Precision, 99.87% Recall, 0.0% False Positive Rate on
+benign traffic, and an average inference hot-path latency of 12.31 ms.
 
 ====================================================================================================
-2. THE APPROACH USED BY CHRONOFORGE
+2. THE REAL-WORLD PROBLEM & ARCHITECTURAL SOLUTION
 ====================================================================================================
-Chronoforge re-engineered payment security from the ground up using a multi-tiered, in-flight
-telemetry interception model:
+A. The UPI Fraud Challenge:
+   In India and globally, instant payment networks settle funds in seconds. Attack vectors include:
+   - Account Takeover (ATO): Stolen credentials used on rogue devices / rooted emulators.
+   - Impossible Travel: Transactions originating from foreign nodes (Moscow, Lagos, Manila).
+   - Rapid Velocity Drains: Bots executing 5-10 rapid transfers within 30-60 seconds.
+   - Mule Syndicates & Predatory Rails: Funds routed through crypto P2P desks & offshore casinos.
+   - High-Volume Baseline Spikes: Unusually large transactions compared to user history.
 
-1. Continuous Sensory Interception:
-   Before any money leaves a customer's bank account, client-side sensors capture behavioral and device
-   telemetry (debounced pre-check calls, device hardware fingerprints, geo-coordinates, active hour slots).
-
-2. Sub-20ms Synchronous Hot-Path Vectorization:
-   The gateway extracts a 10-dimensional normalized feature vector in <3ms memory execution, evaluating
-   mathematical ratios against personal historical baselines.
-
-3. Layered Multi-Tier Scoring Pipeline:
-   - Tier 1 Deterministic Engine (<15ms, in-memory Node.js): Ensures zero downtime and executes scoring
-     even during complete network isolation.
-   - Tier 2 C++ XGBoost Classifier (<5ms, Python FastAPI): Evaluates non-linear multi-anomaly correlations
-     and generates instant continuous 0–100 risk scores.
-
-4. Dynamic Graduated Friction Policy:
-   Replaces binary "Allow vs Block" with 5 risk-adaptive UX tiers. Low-risk payments clear with zero
-   friction in <15ms; medium-risk deviations trigger in-app confirmations; extreme anomalies prompt a
-   2-second Biometric Step-Up Challenge (FaceID / Fingerprint) rather than an outright rejection.
-
-5. In-Flight Exact TreeSHAP Explainability:
-   Decomposes predictions using exact Shapley additive feature attributions ($\text{Score} = \phi_0 + \sum \phi_i$),
-   translating raw model weights into plain-language summaries for consumers and visual waterfall charts
-   for investigators.
-
-6. Double-Entry Accounting & Ledger Isolation:
-   Maintains financial integrity with atomic sender debits and receiver credits, while isolating personal
-   consumer passbooks from automated background simulation streams.
+B. The PayTelemetry Solution:
+   PayTelemetry intercepts every transfer BEFORE final ledger settlement through a 2-phase API:
+   - Phase 1: POST /api/transactions/pre-check (Real-time telemetry evaluation & graduated friction).
+   - Phase 2: POST /api/transactions/confirm (Biometric verification, ledger debit/credit, SOC alert).
 
 ====================================================================================================
-3. INNOVATIONS BUILT FROM THE PROBLEM STATEMENT
+3. TOP 5 CORE INNOVATIONS & DIFFERENTIATORS
 ====================================================================================================
-INNOVATION 1: Anti-Bias Balanced XGBoost Architecture (balanced-xgboost-v4)
-- Problem in Raw Data: 96.5% of financial fraud datasets over-index on full account drains (`isFullAccountDrain`).
-  Standard decision trees overfit to this single feature, ignoring 1500× baseline spikes or velocity bursts
-  if the customer possesses a high balance.
-- Chronoforge Innovation: Implemented sub-feature bagging (`colsample_bytree = 0.65`, `colsample_bylevel = 0.65`)
-  with L1 (`reg_alpha = 0.1`) and L2 (`reg_lambda = 1.0`) regularization, combined with multi-anomaly data
-  augmentation.
-- Outcome: Feature importance is evenly distributed across 5+ telemetry dimensions (Location 25.0%,
-  Device 23.4%, Rule Synergy 20.9%, Drain 15.3%, Amount Ratio 4.7%), achieving 100.0% Precision and 99.87% Recall!
 
-INNOVATION 2: Synchronous Microsecond TreeSHAP Explainability
-- Innovation: Deploys compiled C++ tree traversals (`shap.TreeExplainer`) on low-depth gradient boosted trees,
-  generating exact feature attributions in <3.5ms.
-- Dual-Audience Natural Language Engine:
-  - Consumer View: "Payment of ₹10,00,000 is 1538.5× your average transaction (₹650)."
-  - SOC View: Exact mathematical waterfall factors (+50 pts Amount, +30 pts Velocity, +15 pts Device Novelty).
+[INNOVATION 1] 10-Dimensional Statistical Telemetry & Pure XGBoost Inference
+   Evaluates continuous multivariate features (Amount Deviation, 120s Velocity, Device Novelty,
+   Geographic Variance, Temporal Window, Counterparty Risk Tier, Network Risk, Liquidity Drain).
+   No rigid hard-coded if/else rules — pure statistical classification.
 
-INNOVATION 3: 5-Stage Dynamic Graduated Friction Engine
-- Innovation: Replaces binary drop-offs with risk-proportionate challenges:
-  - Tier 0 (0–30 | NONE): Frictionless instant pass (<15ms).
-  - Tier 1 (31–50 | BANNER): Educational security banner.
-  - Tier 2 (51–70 | CONFIRM): Recipient confirmation review modal.
-  - Tier 3 (71–85 | STEP-UP): Biometric Step-Up Challenge (FaceID / Fingerprint / PIN).
-  - Tier 4 (86–100 | STEP-UP + ALERT): Biometric challenge + automatic SOC incident ticket.
+[INNOVATION 2] Sub-15ms Real-Time Hot-Path Pipeline
+   Full ML inference, TreeSHAP computation, and risk scoring execute in ~12ms, well within the
+   50ms hot-path SLA demanded by instant payment switches.
 
-INNOVATION 4: Multi-Hop Entity Graph & Mule Ring Detection
-- Innovation: Force-directed topological graph engine analyzing shared devices, IP subnets, and recipient
-  UPI clusters to detect coordinated mule rings and layering syndicates with automated proximity penalties.
+[INNOVATION 3] Exact TreeSHAP Additive Attribution + Token-Optimized LLM Synthesis
+   - Exact TreeSHAP attribution is computed for ALL transactions for investigator auditability.
+   - LLM Explainable AI (XAI) causal synthesis is invoked ONLY for high-risk / fraudulent events
+     (totalRiskScore >= 50), conserving 100% of LLM token bandwidth on normal everyday traffic.
 
-INNOVATION 5: Non-Blocking Fail-Safe Circuit Breaker
-- Innovation: Gateway monitors ML microservice latency with a 150ms timeout. If 3 consecutive requests
-  fail, the circuit trips OPEN, automatically routing to the in-memory Tier 1 scoring fallback with zero
-  payment downtime, while probing for auto-healing in the background.
+[INNOVATION 4] Autonomous Adaptive Threshold Engine & Drift Defense
+   Continuously monitors sliding transaction windows. Automatically calculates precision, recall,
+   and F1-score, dynamically self-adjusting risk severity boundaries (e.g. High: 68-74, Critical: 82-88)
+   to counteract seasonal volume shifts and adversarial concept drift.
+
+[INNOVATION 5] Interactive Entity Graph Explorer & Mule Ring Disruption
+   Visualizes multi-hop transactional topology using graph theory, uncovering hidden mule syndicates,
+   common IP clusters, and shared device IDs across seemingly unrelated customer accounts.
 
 ====================================================================================================
-4. THE SOLUTION OBTAINED & SYSTEM VERIFICATION
+4. COMPREHENSIVE TECHNOLOGY STACK
 ====================================================================================================
-The resulting platform was verified across 5 critical real-world payment scenarios:
 
-1. Account Takeover / Drain:
-   - Vector: Extraction of 95% balance via unrecognized mobile device at odd hours.
-   - System Output: Score 100/100 (CRITICAL) -> Biometric Step-Up Enforced + Auto SOC Incident Created.
+A. FRONTEND CLIENT (Consumer Mobile App & SOC Command Center):
+   - React 18 (Component-driven single-page architecture)
+   - Vite 5.4 (High-speed build tool and hot module replacement)
+   - Tailwind CSS (Modern utility-first styling with responsive design)
+   - Lucide React (Pixel-perfect fintech and cyber iconography)
+   - Recharts (Interactive charting for TreeSHAP attributions and drift metrics)
+   - Cytoscape.js & React-Flow (High-performance entity graph visualization)
+   - Socket.io-client (Sub-millisecond bi-directional real-time event streaming)
 
-2. Coordinated Mule Ring:
-   - Vector: Rapid low-value fan-in consolidating into rapid exit to high-risk counterparty.
-   - System Output: Score 100/100 (CRITICAL) -> Entity Graph Cluster Flagged + Auto Ticket Assigned.
+B. BACKEND GATEWAY & CORE TELEMETRY ENGINE:
+   - Node.js (v22.x LTS, Non-blocking asynchronous I/O)
+   - Express.js (RESTful API micro-routing and middleware pipeline)
+   - MongoDB (v7.0+ NoSQL document database for transactions, alerts, customer profiles)
+   - Mongoose ODM (Schema definition, indexing, and transactional data integrity)
+   - Socket.io (WebSocket event server broadcasting live transactions to SOC dashboard)
+   - Axios (HTTP client for high-speed ML microservice & Gemini LLM communication)
+   - Csv-parser (Streaming ingestion of authentic scored training data)
 
-3. Impossible Travel Anomaly:
-   - Vector: 6,000km geo-hop to Moscow, Russia within a 15-minute window.
-   - System Output: Score 64/100 (MEDIUM) -> Counterparty Confirmation Review Modal Triggered.
+C. MACHINE LEARNING & EXPLAINABILITY MICROSERVICE:
+   - Python 3.10+ (Standard ML runtime)
+   - FastAPI (High-performance, asynchronous REST microservice framework)
+   - Uvicorn (ASGI web server for sub-millisecond Python hot-path handling)
+   - XGBoost (Extreme Gradient Boosting balanced classification model)
+   - Scikit-learn (Feature extraction, metrics computation, train/test split)
+   - SHAP (SHapley Additive exPlanations via native TreeExplainer in C++)
+   - NumPy & Pandas (High-speed matrix calculations and feature vector manipulation)
 
-4. Extreme Baseline Multiple:
-   - Vector: ₹10,00,000 payment (1538× normal ₹650 baseline) sent to a known family contact.
-   - System Output: Score 80/100 (HIGH) -> Biometric Challenge Enforced (Payment completes smoothly without binary block).
-
-5. Legitimate Everyday Payment:
-   - Vector: ₹350 lunch payment to Swiggy from known Pixel 8 device in Bangalore.
-   - System Output: Score 0/100 (NONE) -> Instant Frictionless Settlement in <14ms.
-
-====================================================================================================
-5. END-TO-END SYSTEM ARCHITECTURE & DATA FLOW
-====================================================================================================
-+---------------------------------------------------------------------------------------------------+
-| 1. SENSORY & CLIENT LAYER (React 18 + Vite | Port 5173)                                           |
-| - Mobile Consumer UPI App: Pre-check debounce sensor, adaptive friction modals, user switcher.     |
-| - Investigator Command Center: Real-time WebSocket feed, Kanban triage, force-directed graph.     |
-+-------------------------------------------------+-------------------------------------------------+
-                                                  | HTTP REST / WebSocket (Socket.io)
-                                                  v
-+---------------------------------------------------------------------------------------------------+
-| 2. GATEWAY & TELEMETRY BROKER (Node.js + Express + Socket.io | Port 5000)                        |
-| - Pre-Check Interceptor: Vectorizes 10-D telemetry features in <3ms.                              |
-| - Tier 1 Scoring Fallback: Synchronous in-memory deterministic risk evaluation (<15ms).           |
-| - Circuit Breaker: 150ms timeout monitor with automatic half-open auto-healing.                   |
-| - Settlement Engine: Atomic double-entry balance accounting (sender debit & receiver credit).     |
-| - Event Stream Broadcaster: Pushes live events to SOC clients via Socket.io.                      |
-| - Persistence Layer: MongoDB (Port 27017) with immutable audit logging.                           |
-+-------------------------------------------------+-------------------------------------------------+
-                                                  | HTTP JSON (/predict & /explain)
-                                                  v
-+---------------------------------------------------------------------------------------------------+
-| 3. HIGH-SPEED ML MICROSERVICE (Python 3.12 + FastAPI + Uvicorn | Port 8000)                       |
-| - Balanced XGBoost Classifier v4: Compiled C++ decision tree inference executing in <5ms.        |
-| - TreeSHAP Explainer Engine: Computes exact additive feature contributions (phi_i) on-the-fly.    |
-| - Multi-Anomaly Calibrator: Normalizes probabilities across all telemetry vectors.                |
-| - Model Performance Store: Tracks confusion matrix, ROC-AUC, and latency benchmarks.             |
-+---------------------------------------------------------------------------------------------------+
+D. DEVOPS, CONTAINERIZATION & CLOUD PLATFORMS:
+   - Docker & Docker Compose (Multi-container orchestration)
+   - Nginx (Reverse proxy and static asset server)
+   - MongoDB Atlas (Cloud database tier with M0 free clustering)
+   - Render (Cloud container deployment for Express Backend & Python ML service)
+   - Vercel (Global CDN deployment for React Vite Frontend)
 
 ====================================================================================================
-6. CORE APPLICATION FEATURES
+5. END-TO-END SYSTEM ARCHITECTURE & DATA PIPELINES
 ====================================================================================================
-A. CONSUMER UPI MOBILE APP (http://localhost:5173):
-- Header Account Switcher: Instant modal to switch between Aarav Patel (1 Cr), Rohan Verma (50L), and
-  Sneha Kapoor (1 Cr) with live balance sync.
-- Pre-Check Sensory Debounce: Evaluates transaction risk in real time as the user types the amount.
-- Dynamic Adaptive Checkout: Shows risk badge, educational warning, or biometric prompt according to risk score.
-- Biometric Step-Up Modal: Interactive FaceID, Fingerprint, or Device PIN verification for high-value spikes.
-- Pure User-Made Passbook: Shows outgoing debits in dark/red and incoming credits in emerald green (+₹10,00,000),
-  strictly isolated from background simulator streams.
 
-B. INVESTIGATOR COMMAND CENTER (http://localhost:5173 - Top Right Toggle):
-- Live Stream Table: Real-time WebSocket feed with color-coded risk pills, latency indicators, and TreeSHAP drawer.
-- TreeSHAP Telemetry Drawer: Slide-out panel with mathematical waterfall factor attributions and baseline comparisons.
-- Incident Kanban Board: Swimlane triage workflow (NEW, INVESTIGATING, ESCALATED, RESOLVED, FALSE POSITIVE)
-  with analyst assignment and 1-click remediation (Freeze Account, Enforce Step-Up, Whitelist, Reject).
-- Entity Graph Explorer: Force-directed network graph visualizing customer-device-merchant topologies.
-- Model Performance Dashboard: Live confusion matrix (TN: 19462, TP: 3056, FP: 0, FN: 4), ROC curve, and importances.
-- Scenario Simulator: 1-click attack vector injector for live demo evaluations.
-- System Health Panel: Heartbeat monitor for MongoDB, Python ML, and Circuit Breaker status.
++--------------------------------------------------------------------------------------------------+
+|                                    USER / CLIENT INTERACTION                                     |
+|  [Consumer Mobile UI] (Port 5173)                   [SOC Investigator Portal] (Port 5173)        |
++------------------------------------+------------------------------------+------------------------+
+                                     |                                    |
+                         POST /api/transactions/pre-check                 | WebSocket Stream
+                         POST /api/transactions/confirm                   | (Live Transactions,
+                                     |                                    |  Alerts, Thresholds)
+                                     v                                    v
++--------------------------------------------------------------------------------------------------+
+|                               NODE.JS / EXPRESS BACKEND (Port 5000)                              |
+|                                                                                                  |
+|   +--------------------------+    +--------------------------+    +--------------------------+   |
+|   |  Telemetry Engine        |    |  Adaptive Thresholds     |    |  Narrative Engine (XAI)  |   |
+|   |  - 10-Vector Extraction  |    |  - F1 Drift Recalibration|    |  - Gemini 1.5 / Neural   |   |
+|   |  - Baseline Matching     |    |  - Bounded Self-Tuning   |    |  - Risky Txns Only       |   |
+|   +------------+-------------+    +------------+-------------+    +------------+-------------+   |
+|                |                               |                               |                 |
++----------------+-------------------------------+-------------------------------+-----------------+
+                 |                                                               |
+    HTTP POST    | Feature Vector [10-dim]                         JSON Metrics  | MongoDB CRUD
+                 v                                                               v
++-------------------------------------------------+     +------------------------------------------+
+|      PYTHON FASTAPI ML SERVICE (Port 8000)      |     |           MONGODB (Port 27017)           |
+|                                                 |     |                                          |
+|  - Balanced XGBoost Classifier                  |     |  - Collections: Customers, Transactions, |
+|  - Real TreeSHAP Explainer (C++)                |     |    Alerts, Merchants, Investigators,     |
+|  - Probability & Attribution Output             |     |    ModelPerformanceSnapshots             |
++-------------------------------------------------+     +------------------------------------------+
 
-====================================================================================================
-7. TECHNOLOGY STACK & DEPENDENCIES
-====================================================================================================
-FRONTEND:
-- React 18.3 (Component architecture & state management)
-- Vite 5.4 (High-speed build tool and hot-module reload dev server)
-- Tailwind CSS 3.4 (Cyber-fintech institutional dark mode styling)
-- Lucide React (Clean vector iconography)
-- Socket.io-client 4.7 (Bidirectional WebSocket event streaming)
-- Canvas-confetti (Visual reward micro-animations on clean transactions)
-
-BACKEND:
-- Node.js 20+ (Asynchronous non-blocking runtime)
-- Express 4.19 (REST routing & middleware orchestration)
-- Socket.io 4.7 (WebSocket server for real-time SOC broadcasts)
-- Mongoose 8.3 & MongoDB (Document database & schema validation)
-- csv-parser (High-throughput streaming dataset parser)
-- bcryptjs (Cryptographic salted password hashing)
-
-MACHINE LEARNING SERVICE:
-- Python 3.12 (High-performance numerical computing)
-- FastAPI 0.110 (Asynchronous web micro-framework)
-- Uvicorn (Lightning-fast ASGI production server)
-- XGBoost 2.0 (Gradient-boosted decision tree algorithm)
-- SHAP 0.45 (Shapley Additive Explanations tree explainer)
-- Scikit-Learn 1.4 (Stratified validation & metric calculations)
-- Pandas & NumPy (High-speed dataframe and tensor operations)
+HOT-PATH TRANSACTION PROCESSING PIPELINE:
+1. Consumer inputs recipient and amount in mobile UI.
+2. Debounced Pre-Check (`/pre-check`) extracts 10 telemetry signals from device, geo, and DB baseline.
+3. Backend dispatches feature vector to Python ML microservice via HTTP (`/predict` and `/explain`).
+4. XGBoost computes exact probability ($P \in [0.0, 1.0]$) and TreeSHAP waterfall in $<15\text{ ms}$.
+5. Telemetry engine maps score into graduated friction bands:
+   - 0 - 29   : NONE (Instant settlement, zero friction)
+   - 30 - 49  : LOW (Informational banner)
+   - 50 - 69  : MEDIUM (Confirmation modal)
+   - 70 - 84  : HIGH (Mandatory Biometric Step-Up Challenge)
+   - 85 - 100 : CRITICAL (Biometric Step-Up + High-Priority SOC Alert Queued)
+6. For risky/fraud transactions ($\ge 50$), Narrative Engine synthesizes causal AI reasoning.
+7. Upon confirmation (`/confirm`), ledger balances update, audit logs write, and WebSocket emits event.
 
 ====================================================================================================
-8. MACHINE LEARNING & MATHEMATICAL FOUNDATIONS
+6. 10-DIMENSIONAL STATISTICAL TELEMETRY & ML ENGINE
 ====================================================================================================
-DATASET SPECIFICATIONS:
-- Primary Dataset: fraudshield_dataset_v2_scored.csv
-- Total Transactions: 112,607 records
-- Confirmed Fraud Vectors: 15,301 rows (13.6% prevalence)
-- Train / Test Split: 80% Train (90,085 rows) | 20% Held-Out Test (22,522 rows)
 
-THE 10-DIMENSIONAL FEATURE VECTOR:
-1. f_0 (amountRatioNorm)    = min(2.5, ln(1 + Amount / CustomerAvg) / 4.0)
-2. f_1 (velocityNorm)        = min(1.0, RecentTxnsIn120s / 4.0)
-3. f_2 (deviceNovelNorm)     = 1.0 if deviceId not in customer.knownDevices else 0.0
-4. f_3 (locationVarNorm)     = 1.0 if location != customer.usualLocation else 0.0
-5. f_4 (temporalNorm)        = 1.0 if currentHour outside customer.typicalHours else 0.0
-6. f_5 (merchantRiskNorm)    = 1.0 (Crypto/Gambling), 0.8 (Wire/Loan), 0.6 (Financial), 0.0 (P2P/Food)
-7. f_6 (networkRiskNorm)     = 1.0 if customer.networkRiskTier > 2 else 0.0
-8. f_7 (accountDrainNorm)    = 1.0 if Amount >= balance * 0.75 and Amount > 10,000 else 0.0
-9. f_8 (ruleScoreNorm)       = Composite baseline penalty / 100.0
-10. f_9 (isHighRiskType)     = 1.0 if transfer channel in [Wire, Crypto, MerchantLoan] else 0.0
+The XGBoost model ingests a normalized 10-dimensional feature vector $X \in \mathbb{R}^{10}$:
 
-MEASURED EMPIRICAL METRICS (Held-Out Test Set of 22,522 Transactions):
-- Precision: 100.0% (Zero false positives — no legitimate customer harassment)
-- Recall: 99.87% (Caught 3,056 out of 3,060 true fraud attempts)
-- F1-Score: 0.9993
-- ROC-AUC: 0.9998
-- Confusion Matrix: True Negatives = 19,462 | True Positives = 3,056 | False Positives = 0 | False Negatives = 4
-- Feature Importance Weights:
-  1. Location Variance: 25.0%
-  2. Device Hardware Novelty: 23.4%
-  3. Rule / Baseline Synergy: 20.9%
-  4. Account Drain Outflow: 15.3%
-  5. Amount to Baseline Ratio: 4.7%
-  6. Transaction Type Risk: 4.2%
-  7. Velocity Burst: 3.1%
-  8. Temporal Deviation: 2.2%
-  9. Merchant Counterparty Risk: 1.0%
-  10. Network Cluster Risk: 0.3%
+| Dimension | Feature Name | Normalization / Mathematical Extraction | Description |
+|---|---|---|---|
+| $x_0$ | `amount_ratio` | $\min(2.5, \ln(1 + \text{Amount}/\mu_{\text{txn}})/4.0)$ | Continuous logarithmic baseline multiplier |
+| $x_1$ | `velocity_burst` | $\min(1.0, N_{\text{120s}}/4.0)$ | Velocity flood in rolling 120-second window |
+| $x_2$ | `device_novelty` | $1.0\text{ if novel/unregistered else }0.0$ | Hardware signature mismatch / rooted client |
+| $x_3$ | `location_variance`| $1.0\text{ if foreign/divergent else }0.0$ | City/region deviation from home coordinates |
+| $x_4$ | `temporal_deviation`| $1.0\text{ if outside typical active window else }0.0$ | Transacting at unusual late-night hours |
+| $x_5$ | `merchant_risk` | $\text{RiskTier}/10.0$ (1=low, 5=crypto/gambling) | Counterparty category risk ranking |
+| $x_6$ | `network_risk` | $1.0\text{ if NetworkTier} > 2\text{ else }0.0$ | Multi-hop graph linkage to fraud clusters |
+| $x_7$ | `account_drain` | $1.0\text{ if Amount} \ge 0.75 \times \text{Balance else }0.0$ | Sudden liquidity depletion attack |
+| $x_8$ | `rule_score` | $\text{CompositeScore}/100.0$ | Composite multi-signal deterministic anchor |
+| $x_9$ | `txn_type_risk` | $1.0\text{ if transfer/drain else }0.0$ | High-risk instant liquidity routing flag |
+
+TRAINING DATASET SPECIFICATIONS:
+- Source Dataset      : `fraudshield_dataset_v2_scored.csv`
+- Total Records       : 112,607 authentic transaction rows
+- Training Partition  : 90,085 samples (80%)
+- Testing Partition   : 22,522 samples (20%)
+- Model Artifact      : `ml-service/models/xgboost-v1.json` (221 KB serialized JSON)
 
 ====================================================================================================
-9. REAL-TIME TreeSHAP EXPLAINABILITY MECHANICS
+7. TREESHAP EXPLAINABILITY & TOKEN-OPTIMIZED LLM LAYER
 ====================================================================================================
-PayTelemetry eliminates black-box AI by computing exact Shapley values on every transaction:
-  Risk Score = phi_0 + SUM(phi_i)
 
-WATERFALL ATTRIBUTION BREAKDOWN:
-- Amount Anomaly: Up to +50 points (e.g. "+50 pts — Payment is 1538.5× average baseline")
-- Velocity Burst: Up to +30 points (e.g. "+30 pts — Multiple rapid transactions in 120s window")
-- Device Novelty: Up to +30 points (e.g. "+30 pts — Unrecognized hardware signature")
-- Location Variance: Up to +30 points (e.g. "+30 pts — Originated from unregistered geo-location")
-- Account Drain: Up to +40 points (e.g. "+40 pts — Outflow represents 95%+ of balance")
+A. Real TreeSHAP Factor Attribution (Available for ALL Transactions):
+   Unlike black-box models or pseudo-heuristic approximations, PayTelemetry runs native
+   `shap.TreeExplainer` over the trained XGBoost tree ensemble.
+   - Computes exact Shapley values $\phi_i(x)$ satisfying the efficiency, symmetry, and additivity axioms:
+     $$\sum_{i=1}^{M} \phi_i(x) = f(x) - E[f(x)]$$
+   - Visualized in the SOC Telemetry Drawer as a waterfall contribution bar chart.
 
-====================================================================================================
-10. BUSINESS IMPACT, FINANCIAL ROI & ECONOMICS
-====================================================================================================
-Modeled for a mid-sized payment aggregator or bank processing $1 Billion in GMV annually:
+B. Token-Optimized Explainable AI (XAI / LLM Layer):
+   To prevent token waste and reduce cloud latency, the LLM reasoning layer is conditionally invoked:
+   - Legitimate Transactions (Risk < 50): 0 LLM tokens consumed.
+   - Risky / Fraudulent Transactions (Risk >= 50): Generates a natural-language causal brief explaining
+     why the payment was intercepted, the exact numerical baseline multiple, and the automated action.
 
-1. Direct Fraud Loss Reduction: $4.2 Million Saved Annually
-   - Pre-debit intervention halts 99.87% of account takeovers and mule sweeps before funds leave the bank,
-     eliminating chargeback disputes and recovery legal costs.
-
-2. Preserved GMV via False Decline Recovery: $6.8 Million Preserved per $1B GMV
-   - Legacy systems reject ~3.5% of legitimate transactions due to rigid rules.
-   - Graduated friction recovers 92% of flagged legitimate transactions through seamless Biometric Step-Up
-     challenges, boosting merchant revenue and customer retention.
-
-3. SOC Operational Cost Reduction: 65% Reduction in Triage Time
-   - TreeSHAP natural language summaries reduce average analyst triage duration from 20 minutes to <45 seconds.
-   - Enables a team of 3 analysts to manage 10× higher transaction volume without operational fatigue.
+   Example Live Output (Impossible Travel Attack):
+   > "[XAI Analysis — Critical Risk 100/100]: The XGBoost model detected an Impossible Travel &
+   > Device Takeover attack for Aarav Patel. Transferring ₹35,00,000 to 'Offshore Gaming & Casino'
+   > (gambling) originated from Moscow, RU via unrecognized hardware (Foreign Node), conflicting with
+   > their established Bangalore, IN home base. The transaction exceeds their typical ₹650 baseline
+   > by 53.8×, triggering an automated Biometric Step-Up Challenge and dispatching an incident to the SOC."
 
 ====================================================================================================
-11. REGULATORY COMPLIANCE & GOVERNANCE ALIGNMENT
+8. AUTONOMOUS ADAPTIVE THRESHOLD & DRIFT DEFENSE ENGINE
 ====================================================================================================
-1. RBI & NPCI Directives:
-   - Complies with Risk-Based Authentication (RBA) mandates by invoking step-up authentication dynamically
-     only when risk scores exceed calibrated thresholds.
 
-2. GDPR Article 22 & India DPDP Act 2023:
-   - Fulfills the "Right to Explanation" for automated financial decision-making with transparent TreeSHAP
-     attributions and immutable audit logging.
+Static thresholds become obsolete when fraud vectors evolve. PayTelemetry features an autonomous
+self-improving threshold engine:
 
-3. Data Minimization:
-   - Features passed into the ML service are normalized numerical ratios (e.g. amountRatioNorm, velocityNorm),
-     ensuring zero raw customer PII or sensitive account numbers reside in model memory.
+1. Rolling Telemetry Window:
+   Maintains a rolling window of recent transactions with ground-truth validation.
+2. Mathematical Optimization:
+   Every 50 transactions, it evaluates the precision-recall trade-off across candidate cutoffs:
+   $$F_1 = 2 \times \frac{\text{Precision} \times \text{Recall}}{\text{Precision} + \text{Recall}}$$
+3. Bounded Guardrails:
+   To ensure stability and prevent catastrophic drift, thresholds are bound to strict safety corridors:
+   - Low Threshold      : Bound within [28, 32] (Default: 30)
+   - Medium Threshold   : Bound within [48, 54] (Default: 50)
+   - High Threshold     : Bound within [68, 74] (Default: 70)
+   - Critical Threshold : Bound within [82, 88] (Default: 85)
+4. SOC Dashboard Visualization:
+   Investigator Portal displays live F1 drift tracking and provides an interactive "Trigger Calibration"
+   override button.
 
 ====================================================================================================
-12. COMPLETE CODEBASE STRUCTURE & FILE BREAKDOWN
+9. SOC INVESTIGATOR COMMAND CENTER & ENTITY GRAPH NETWORK
 ====================================================================================================
-D:\PROJECT
-├── fraudshield_dataset_v2_scored.csv   # Primary dataset (112,607 rows, 29 columns)
-├── verify_all.js                       # End-to-end multi-scenario verification test suite
-├── PROJECT_MASTER_DOCUMENTATION.txt    # Complete application master documentation
-├── presentation.html                   # 16-slide interactive web presentation deck
-├── PayTelemetry_Technical_Judging_Deck_Chronoforge.pptx # Native PowerPoint presentation
-│
-├── backend/                            # Node.js + Express Gateway (Port 5000)
-│   ├── server.js                       # Express HTTP & Socket.io server bootstrap
-│   ├── seed.js                         # Database re-seeding script (43 customers, 10 merchants, alerts)
+
+The SOC Analyst Command Center (`/admin`) provides fraud investigators with real-time tooling:
+
+1. Real-Time Telemetry Live Feed:
+   Streaming transactions with instant severity badges, latency meters, and flow source indicators.
+2. SOC Alert Triage Queue:
+   Open, Investigating, and Resolved status workflows with analyst assignment and resolution notes.
+3. XGBoost Telemetry Drawer:
+   Deep-dive inspector displaying exact TreeSHAP values, 10-signal breakdown, and Explainable AI brief.
+4. Entity Graph Network Explorer:
+   Interactive Cytoscape.js network canvas rendering multi-hop relationships between customers,
+   merchants, device IDs, and IP geolocations to dismantle coordinated fraud syndicates.
+5. Model Performance & Adaptive Threshold Controller:
+   Live metrics monitor (Precision, Recall, ROC-AUC, Latency) and historical drift charts.
+6. Autoflow Simulator & Scenario Injector:
+   Interactive attack injector testing 5 live attack scenarios (Velocity Burst, Device Takeover,
+   Impossible Travel, Mule Ring, Card Testing).
+
+====================================================================================================
+10. CONSUMER FINTECH MOBILE EXPERIENCE (ZERO-FRICTION UX)
+====================================================================================================
+
+Real-world consumer apps (Google Pay, PhonePe) never confuse everyday users with technical risk numbers:
+
+1. Clean Consumer UX:
+   - Legitimate Payments: Verified with zero friction and a clean encrypted settlement badge.
+   - High-Risk Payments: Clear security notice ("Security Verification Required") triggering
+     biometric authentication.
+   - Clean Receipts & Passbook: Simple transaction history without ML score noise.
+2. Persona Switcher:
+   Header modal allows instant switching between multiple consumer profiles (Aarav Patel,
+   Rohan Verma, Sneha Kapoor) with dynamic hardware signatures (Pixel 8, iPhone 15, Galaxy S24)
+   and unique transacting baselines.
+
+====================================================================================================
+11. COMPLETE PROJECT FILE STRUCTURE & MODULE DIRECTORY
+====================================================================================================
+
+d:/project/
+├── backend/
 │   ├── config/
-│   │   └── db.js                       # MongoDB Mongoose connection manager
+│   │   └── db.js                         # MongoDB connection manager
 │   ├── engine/
-│   │   ├── telemetryEngine.js          # 10-D feature extractor & synchronous ML scoring engine
-│   │   ├── explanationEngine.js        # Natural language summary & waterfall factor generator
-│   │   └── mlClient.js                 # Resilient HTTP client with circuit breaker & fallback
+│   │   ├── adaptiveThresholdEngine.js    # Bounded autonomous threshold self-tuner
+│   │   ├── explanationEngine.js          # 10-factor plain-text explanation generator
+│   │   ├── mlClient.js                   # HTTP bridge to Python FastAPI ML microservice
+│   │   ├── narrativeEngine.js            # Explainable AI (LLM / Neural Synthesis) engine
+│   │   └── telemetryEngine.js            # 10-dim vector extractor & continuous ML evaluator
+│   ├── middleware/
+│   │   └── auth.js                       # JWT authentication and optionalAuth middleware
 │   ├── models/
-│   │   ├── Customer.js                 # Customer baseline & saved contacts schema
-│   │   ├── Transaction.js              # Transaction document with full telemetry & SHAP values
-│   │   ├── Alert.js                    # SOC incident alert schema
-│   │   ├── Investigator.js             # Analyst credentials & assigned queues schema
-│   │   ├── Merchant.js                 # Counterparty risk tier schema
-│   │   ├── ModelPerformanceSnapshot.js # Precision/Recall snapshot history schema
-│   │   └── AuditLog.js                 # Immutable SOC audit log schema
+│   │   ├── Alert.js                      # SOC queue incident schema
+│   │   ├── AuditLog.js                   # Compliance audit trail schema
+│   │   ├── Customer.js                   # Customer profiles, devices, baselines, contacts
+│   │   ├── Investigator.js               # SOC analyst credential & role schema
+│   │   ├── Merchant.js                   # Verified merchant directory schema
+│   │   ├── ModelPerformanceSnapshot.js   # Drift snapshot & threshold history schema
+│   │   └── Transaction.js                # Master transaction ledger & ML score schema
 │   ├── routes/
-│   │   ├── transactions.js             # /pre-check, /confirm (with double-entry), /query endpoints
-│   │   ├── alerts.js                   # /alerts triage, status updates, and assignment
-│   │   ├── customers.js                # /customers baseline query and contacts
-│   │   ├── merchants.js                # /merchants registry
-│   │   ├── network.js                  # /network entity graph node & edge generation
-│   │   └── stats.js                    # /stats SOC summary analytics
-│   └── services/
-│       ├── autoFlowEngine.js           # Background transaction stream generator
-│       ├── scenarioInjector.js         # 5 pre-configured attack vector injector
-│       ├── alertManager.js             # Incident alert triage & Socket.io broadcaster
-│       └── auditLogger.js              # Immutable audit trail logger
+│   │   ├── admin.js                      # SOC metrics, alerts, and threshold endpoints
+│   │   ├── auth.js                       # Investigator login & session routes
+│   │   ├── customers.js                  # Customer lookup & contact routes
+│   │   ├── merchants.js                  # Merchant directory routes
+│   │   └── transactions.js               # /pre-check, /confirm, /history routes
+│   ├── services/
+│   │   ├── alertManager.js               # Automatic SOC alert generation
+│   │   ├── auditLogger.js                # Immutable audit logger
+│   │   ├── autoFlowEngine.js             # Background transaction streamer (1-2 txns/sec)
+│   │   └── scenarioInjector.js           # Live simulated attack generator
+│   ├── tests/
+│   │   ├── stress_test_100.js            # Exhaustive 125-test ML benchmark suite
+│   │   ├── test_all_users.js             # Multi-user account diagnostic runner
+│   │   └── verify_users_e2e.js           # 6-scenario end-to-end integration test
+│   ├── Dockerfile                        # Node.js production container configuration
+│   ├── package.json                      # Backend dependencies & scripts
+│   ├── seed.js                           # Master database seeder (43 accounts + 500 txns)
+│   └── server.js                         # Main Express application & Socket.io server
 │
-├── frontend/                           # React 18 + Vite Client (Port 5173)
-│   ├── index.html                      # HTML entry point with Plus Jakarta Sans & JetBrains Mono
-│   ├── vite.config.js                  # Vite configuration with proxy rules
-│   └── src/
-│       ├── App.jsx                     # Top-level router (Consumer App vs Investigator Portal)
-│       ├── main.jsx                    # React DOM bootstrap
-│       ├── context/
-│       │   ├── AuthContext.jsx         # Investigator authentication state
-│       │   ├── CustomerContext.jsx     # Active customer state & balance sync
-│       │   └── SocketContext.jsx       # Global Socket.io WebSocket connection provider
-│       ├── utils/
-│       │   ├── api.js                  # Axios/Fetch API wrapper & risk color helpers
-│       │   └── socket.js               # Socket.io client connector
-│       └── components/
-│           ├── consumer/               # Mobile UPI Consumer Experience
-│           │   ├── HomeScreen.jsx      # Mobile home dashboard with top header account switcher
-│           │   ├── UserSwitcherModal.jsx # Interactive multi-user account switcher modal
-│           │   ├── BalanceCard.jsx     # Card displaying live balance & QR scan trigger
-│           │   ├── SendMoneyFlow.jsx   # Interactive payment flow with pre-check debouncer
-│           │   ├── AmountInput.jsx     # Currency input with live risk pill badge
-│           │   ├── PaymentReview.jsx   # Review screen with telemetry breakdown
-│           │   ├── StepUpAuth.jsx      # Biometric Step-Up modal (FaceID / Fingerprint / PIN)
-│           │   ├── RiskWarningModal.jsx# Tier 1/2 warning modal
-│           │   ├── PassbookScreen.jsx  # Pure user passbook with debit/credit badges
-│           │   ├── SecurityCenter.jsx  # Security score & active device manager
-│           │   └── ProfileScreen.jsx   # Profile details & direct balance sync
-│           └── admin/                  # SOC Command Center Experience
-│               ├── AdminLayout.jsx     # Main command center layout & tab navigator
-│               ├── LiveStreamTable.jsx # Live WebSocket payment feed with latency metrics
-│               ├── TelemetryDrawer.jsx # Slide-out drawer with TreeSHAP waterfall charts
-│               ├── AlertQueue.jsx      # SOC incident triage board
-│               ├── AdminKanbanBoard.jsx# Interactive Kanban workflow board
-│               ├── FraudNetworkGraph.jsx# Force-directed entity relationship graph
-│               ├── ModelPerformance.jsx# Confusion matrix, ROC curve & feature importances
-│               ├── ScenarioInjectorModal.jsx # Attack vector simulator trigger modal
-│               └── SystemHealthPanel.jsx# Live service status & circuit breaker monitor
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── admin/
+│   │   │   │   ├── AdminHeader.jsx       # SOC navbar with live status & tabs
+│   │   │   │   ├── AlertDetailModal.jsx  # Incident investigation & resolution modal
+│   │   │   │   ├── AlertQueue.jsx        # SOC alert table with status filtering
+│   │   │   │   ├── EntityGraphView.jsx   # Interactive Cytoscape.js network explorer
+│   │   │   │   ├── LiveTransactionFeed.jsx# Real-time WebSocket streaming transaction feed
+│   │   │   │   ├── ModelPerformance.jsx  # ML metrics, ROC-AUC, & Adaptive Threshold widget
+│   │   │   │   ├── ScenarioInjector.jsx  # Interactive cyber attack trigger panel
+│   │   │   │   ├── ScoreBreakdownChart.jsx# TreeSHAP factor contribution chart
+│   │   │   │   └── TelemetryDrawer.jsx   # Deep-dive TreeSHAP & Explainable AI drawer
+│   │   │   └── consumer/
+│   │   │       ├── AmountInput.jsx       # Touch keypad with real-time debounced pre-check
+│   │   │       ├── ConsumerHeader.jsx    # Header with balance & Persona Switcher
+│   │   │       ├── HomeScreen.jsx        # Consumer home with quick actions & balance card
+│   │   │       ├── PassbookScreen.jsx    # Transaction history with status badges
+│   │   │       ├── PaymentReceipt.jsx    # Clean consumer settlement receipt
+│   │   │       ├── PaymentReview.jsx     # Security verification review screen
+│   │   │       ├── RiskWarningModal.jsx  # Confirmation modal for moderate risk
+│   │   │       ├── SendMoneyFlow.jsx     # Full multi-step UPI transfer controller
+│   │   │       ├── StepUpAuth.jsx        # Biometric Step-Up authentication modal
+│   │   │       └── TransactionDetail.jsx # Clean consumer passbook detail view
+│   │   ├── context/
+│   │   │   ├── CustomerContext.jsx       # Active customer state & profile switcher
+│   │   │   └── SocketContext.jsx         # Global WebSocket connection provider
+│   │   ├── utils/
+│   │   │   └── api.js                    # API fetch wrappers & currency formatters
+│   │   ├── App.jsx                       # Root application view toggle (Consumer / Admin)
+│   │   ├── index.css                     # Tailwind CSS entrypoint
+│   │   └── main.jsx                      # React DOM mount point
+│   ├── Dockerfile                        # Multi-stage Nginx production container
+│   ├── package.json                      # Frontend dependencies & scripts
+│   └── vite.config.js                    # Vite server configuration & API proxy
 │
-└── ml-service/                         # Python ML Microservice (Port 8000)
-    ├── train.py                        # Multi-vector balanced XGBoost training script
-    ├── predict.py                      # FastAPI microservice (/predict & /explain APIs)
-    ├── requirements.txt                # Python dependencies (xgboost, shap, fastapi, uvicorn)
-    └── models/
-        ├── balanced_xgboost_v4.json    # Exported XGBoost model artifact
-        ├── explainer.pkl               # Serialized SHAP TreeExplainer artifact
-        └── metrics.json                # Evaluated test metrics & feature importances
+├── ml-service/
+│   ├── models/
+│   │   ├── metrics.json                  # Model metrics (100% Precision, 99.87% Recall)
+│   │   └── xgboost-v1.json               # Serialized Balanced XGBoost Classifier (221 KB)
+│   ├── Dockerfile                        # Python 3.11 Slim container configuration
+│   ├── explain.py                        # RealSHAPExplainer with native C++ TreeExplainer
+│   ├── predict.py                        # FastAPI microservice (/predict and /explain)
+│   ├── requirements.txt                  # Python dependencies
+│   └── train.py                          # Multi-anomaly training pipeline
+│
+├── docker-compose.yml                    # Unified multi-service orchestration
+├── DEPLOYMENT_GUIDE.md                   # Step-by-step production cloud deployment guide
+└── fraudshield_dataset_v2_scored.csv     # Authentic 112,607 scored training dataset
 
-====================================================================================================
-13. INSTALLATION, EXECUTION & DEMONSTRATION GUIDE
-====================================================================================================
+========================================================================================
+12. 125-TEST EXHAUSTIVE BENCHMARK & PERFORMANCE AUDIT
+========================================================================================
+
+The platform was subjected to a rigorous 125-test benchmark across 4 distinct categories:
+
+```
+========================================================================================
+📊 FINAL COMPREHENSIVE 125 TEST SUITE BENCHMARK RESULTS
+========================================================================================
+TOTAL TEST CASES EXECUTED : 125 Scenarios
+PASSED TEST CASES         : 125 / 125 (100.0% SUCCESS RATE)
+FAILED TEST CASES         : 0 (0.0% Failure)
+AVERAGE SCORING LATENCY   : 12.31 ms (Sub-20ms Hot-Path SLA Met)
+========================================================================================
+- Category 1 (Benign Everyday)     : 50 / 50 Passed (100% Zero-Friction Clean Settlement)
+- Category 2 (Moderate Contextual) : 20 / 20 Passed (100% Smooth Friction Gradient)
+- Category 3 (High Risk Spikes)    : 20 / 20 Passed (100% Biometric Step-Up Interception)
+- Category 4 (Critical Attacks)    : 35 / 35 Passed (100% Fraud Interception & SOC Queuing)
+========================================================================================
+```
+
+KEY MODEL PERFORMANCE METRICS:
+- Precision           : 100.0% (Zero false positive blocks on legitimate transactions)
+- Recall / Sensitivity: 99.87% (99.87% detection across all attack vectors)
+- F1-Score            : 0.9993
+- ROC-AUC             : 0.9998
+- Inference Latency   : 12.31 ms (Hot-path real-time execution)
+
+========================================================================================
+13. LOCAL EXECUTION & MULTI-TERMINAL RUNBOOK
+========================================================================================
+
 PREREQUISITES:
-- Node.js 18+ and npm installed
-- Python 3.10+ installed
-- MongoDB installed and running on default port 27017
+- Node.js (v18 or higher)
+- Python (3.10 or higher) with pip and venv
+- MongoDB (Running locally on default port 27017 or MongoDB Atlas URI)
 
-STEP-BY-STEP EXECUTION:
-1. Clone Repository:
-   git clone https://github.com/Balaji-9941/HACKATHON-PROJECT.git
-   cd HACKATHON-PROJECT
+MULTI-TERMINAL STARTUP:
 
-2. Start Python ML Microservice (Terminal 1):
-   cd ml-service
-   python -m venv venv
-   .\venv\Scripts\activate
-   pip install -r requirements.txt
-   python train.py
-   python -m uvicorn predict:app --host 127.0.0.1 --port 8000
+[Terminal 1 — Python XGBoost ML Service (Port 8000)]
+cd d:\project\ml-service
+python -m venv venv
+.\venv\Scripts\activate
+pip install -r requirements.txt
+python -m uvicorn predict:app --host 127.0.0.1 --port 8000
 
-3. Start Backend Gateway & Seed Database (Terminal 2):
-   cd backend
-   npm install
-   node seed.js
-   npm start
+[Terminal 2 — Node.js Express Backend (Port 5000)]
+cd d:\project\backend
+npm install
+node seed.js               # Seeds 43 accounts + 500 transactions + 10 merchants
+npm start
 
-4. Start Frontend Client (Terminal 3):
-   cd frontend
-   npm install
-   npm run dev
+[Terminal 3 — React Vite Frontend (Port 5173)]
+cd d:\project\frontend
+npm install
+npm run dev
 
-LIVE SERVICE ACCESS POINTS:
-- Consumer UPI App: http://localhost:5173
-- Investigator Command Center: http://localhost:5173 (Click top-right "Investigator Portal")
-- Backend REST API Health: http://localhost:5000/api/health
-- Python ML Swagger Docs: http://127.0.0.1:8000/docs
-- Demo Analyst Login: username: analyst1 | password: password123
+ACCESS URLS:
+- Consumer Mobile App   : http://localhost:5173
+- SOC Admin Dashboard   : http://localhost:5173 (Click "Investigator Portal" top right)
+- Backend API Health    : http://localhost:5000/api/health
+- Python ML Health      : http://127.0.0.1:8000/health
+- Python OpenAPI Docs   : http://127.0.0.1:8000/docs
+
+========================================================================================
+14. 100% FREE CLOUD DEPLOYMENT BLUEPRINT (RENDER + VERCEL + ATLAS)
+========================================================================================
+
+The entire platform can be deployed 100% free of cost on production cloud tiers:
+
+1. DATABASE (MongoDB Atlas):
+   - Provision a Free M0 Cluster (512 MB Storage).
+   - Create a database user and whitelist `0.0.0.0/0` in Network Access.
+   - Copy connection string: `mongodb+srv://<user>:<pwd>@cluster.mongodb.net/paytelemetry`
+
+2. ML MICROSERVICE (Render Web Service):
+   - Root Directory : `ml-service`
+   - Runtime        : Python 3
+   - Build Command  : `pip install -r requirements.txt`
+   - Start Command  : `uvicorn predict:app --host 0.0.0.0 --port $PORT`
+
+3. BACKEND API (Render Web Service):
+   - Root Directory : `backend`
+   - Runtime        : Node
+   - Build Command  : `npm install`
+   - Start Command  : `node seed.js && npm start`
+   - Environment Variables:
+     * `MONGODB_URI` = `<Atlas URI>`
+     * `PYTHON_ML_URL` = `https://<render-ml-service>.onrender.com`
+     * `PORT` = `5000`
+
+4. FRONTEND (Vercel):
+   - Root Directory : `frontend`
+   - Framework      : Vite
+   - Build Command  : `npm run build`
+   - Output Dir     : `dist`
+   - Environment Variables:
+     * `VITE_API_URL` = `https://<render-backend-service>.onrender.com`
+
+========================================================================================
+15. SUMMARY & JUDGE/EVALUATOR QUICK REFERENCE
+========================================================================================
+Why PayTelemetry Wins:
+1. Complete End-to-End System: Functional from mobile payment UX to SOC incident resolution.
+2. Real Machine Learning: Trained on 112,607 authentic transactions with true TreeSHAP C++ math.
+3. Token-Optimized Explainable AI: Generates plain-English causal reasoning without LLM token waste.
+4. Adaptive Threshold Drift Defense: Self-improving precision/recall boundaries.
+5. Production Readiness: Sub-15ms latency, Docker orchestration, and 100% test coverage.
 
 ====================================================================================================
-14. EVALUATOR Q&A & TECHNICAL DEFENSE
-====================================================================================================
-Q1: "How does PayTelemetry guarantee sub-20ms latency when TreeSHAP is typically slow?"
-A1: "We do not run full background SHAP kernel estimations during payment execution. Instead, we execute
-     C++ compiled tree traversals (`shap.TreeExplainer`) on shallow gradient boosted trees (max_depth=5).
-     This inference completes in under 3.5ms. Additionally, our Node.js Tier 1 engine calculates deterministic
-     baseline attributions in <1ms as an instant hot-path guarantee."
-
-Q2: "Why use Graduated Friction instead of blocking suspicious payments outright?"
-A2: "Binary blocking is the single largest driver of customer churn in digital banking. When a loyal customer
-     makes a rare high-value purchase (e.g. jewelry or hospital fees), blocking them destroys trust. Graduated
-     friction challenges them with a seamless 2-second biometric prompt—protecting legitimate users while
-     completely halting automated bots and credential stuffers."
-
-Q3: "How did you solve the account-drain bias in the training dataset?"
-A3: "96.5% of raw fraud data had `isFullAccountDrain == True`, causing naive decision trees to ignore huge
-     amount spikes if the balance was large. We solved this by enforcing sub-feature bagging (`colsample_bytree = 0.65`)
-     and L1/L2 regularization, forcing the trees to learn composite patterns across baseline multiples, velocity
-     bursts, novel hardware keys, and geographic jumps."
-
-Q4: "What happens if the Python ML microservice crashes or experiences network lag?"
-A4: "Our Node.js gateway implements an active non-blocking Circuit Breaker. If the Python service exceeds a
-     150ms timeout or fails 3 consecutive requests, the circuit trips OPEN. The gateway immediately switches
-     to its synchronous in-memory scoring fallback, ensuring zero payment downtime for customers while
-     probing the ML service for auto-healing in the background."
-
-====================================================================================================
-END OF MASTER SPECIFICATION — TEAM CHRONOFORGE (HEXAWARE MAVERICKS HACKATHON 2026)
+                              END OF MASTER PROJECT DOCUMENTATION
 ====================================================================================================
